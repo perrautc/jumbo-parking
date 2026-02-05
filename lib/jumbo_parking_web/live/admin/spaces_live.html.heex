@@ -1,0 +1,154 @@
+<div>
+  <h1 class="text-2xl font-bold text-white mb-8">Parking Spaces</h1>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-white">{@stats.total}</p>
+      <p class="text-xs text-[#a0a0a0]">Total</p>
+    </div>
+    <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-green-400">{@stats.available}</p>
+      <p class="text-xs text-[#a0a0a0]">Available</p>
+    </div>
+    <div class="bg-[#c8d935]/10 border border-[#c8d935]/20 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-[#c8d935]">{@stats.occupied}</p>
+      <p class="text-xs text-[#a0a0a0]">Occupied</p>
+    </div>
+    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-blue-400">{@stats.reserved}</p>
+      <p class="text-xs text-[#a0a0a0]">Reserved</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-col sm:flex-row gap-4 mb-8">
+    <div class="flex-1">
+      <form phx-change="search" class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#a0a0a0] absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" name="search" value={@search} phx-debounce="300"
+          class="w-full bg-[#1a1a1a] border border-[#333333] rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-[#666] focus:border-[#c8d935] focus:ring-1 focus:ring-[#c8d935] outline-none transition-colors"
+          placeholder="Search by space number or zone..." />
+      </form>
+    </div>
+
+    <form phx-change="filter_zone">
+      <select name="zone" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
+        <option value="all" selected={@zone_filter == "all"}>All Zones</option>
+        <option value="Zone A - Trucks" selected={@zone_filter == "Zone A - Trucks"}>Zone A - Trucks</option>
+        <option value="Zone B - RVs" selected={@zone_filter == "Zone B - RVs"}>Zone B - RVs</option>
+        <option value="Zone C - Cars" selected={@zone_filter == "Zone C - Cars"}>Zone C - Cars</option>
+      </select>
+    </form>
+
+    <form phx-change="filter_status">
+      <select name="status" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
+        <option value="all" selected={@status_filter == "all"}>All Status</option>
+        <option value="available" selected={@status_filter == "available"}>Available</option>
+        <option value="occupied" selected={@status_filter == "occupied"}>Occupied</option>
+        <option value="reserved" selected={@status_filter == "reserved"}>Reserved</option>
+        <option value="maintenance" selected={@status_filter == "maintenance"}>Maintenance</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Legend -->
+  <div class="flex flex-wrap gap-4 mb-6">
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-green-500"></div>
+      <span class="text-xs text-[#a0a0a0]">Available</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-[#c8d935]"></div>
+      <span class="text-xs text-[#a0a0a0]">Occupied</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+      <span class="text-xs text-[#a0a0a0]">Reserved</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+      <span class="text-xs text-[#a0a0a0]">Maintenance</span>
+    </div>
+  </div>
+
+  <!-- Spaces Grid by Zone -->
+  <div class="space-y-8">
+    <%= for {zone, zone_spaces} <- @spaces_by_zone do %>
+      <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-white mb-4">{zone}</h2>
+        <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+          <%= for space <- zone_spaces do %>
+            <button
+              phx-click="open_detail"
+              phx-value-id={space.id}
+              class={"flex flex-col items-center justify-center p-2 rounded-lg border transition-all hover:scale-105 cursor-pointer #{space_color(space.status)}"}
+            >
+              <span class="text-xs font-medium">{space.number}</span>
+              <span :if={space.status == "occupied" && space.customer} class="text-[10px] font-bold mt-0.5">
+                {customer_initials(space.customer)}
+              </span>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Space Detail Modal -->
+  <.modal id="detail-modal" show={@show_detail_modal} on_cancel={JS.push("close_modal")}>
+    <div :if={@selected_space} class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-white">Space {@selected_space.number}</h3>
+          <p class="text-[#a0a0a0] text-sm">{@selected_space.zone}</p>
+        </div>
+        <.status_badge status={@selected_space.status} />
+      </div>
+
+      <!-- Customer info if occupied -->
+      <div :if={@selected_space.customer} class="bg-[#111111] rounded-lg p-4 mb-6">
+        <h4 class="text-sm font-medium text-[#a0a0a0] mb-3">Assigned Customer</h4>
+        <div class="space-y-2">
+          <p class="text-white font-medium">{@selected_space.customer.first_name} {@selected_space.customer.last_name}</p>
+          <p class="text-[#a0a0a0] text-sm">{@selected_space.customer.email}</p>
+          <p :if={@selected_space.customer.phone} class="text-[#a0a0a0] text-sm">{@selected_space.customer.phone}</p>
+          <p class="text-[#a0a0a0] text-sm capitalize">Vehicle: {@selected_space.customer.vehicle_type} - {@selected_space.customer.vehicle_plate}</p>
+        </div>
+      </div>
+
+      <!-- Reservation info -->
+      <div :if={@selected_space.reserved_from} class="bg-[#111111] rounded-lg p-4 mb-6">
+        <h4 class="text-sm font-medium text-[#a0a0a0] mb-2">Reservation Period</h4>
+        <p class="text-white text-sm">
+          {Calendar.strftime(@selected_space.reserved_from, "%b %d, %Y")}
+          - {if @selected_space.reserved_until, do: Calendar.strftime(@selected_space.reserved_until, "%b %d, %Y"), else: "Ongoing"}
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button :if={@selected_space.status == "occupied"}
+          phx-click="release_space" phx-value-id={@selected_space.id}
+          class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2.5 rounded-lg transition-colors">
+          Release Space
+        </button>
+        <button :if={@selected_space.status == "available"}
+          phx-click="set_maintenance" phx-value-id={@selected_space.id}
+          class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2.5 rounded-lg transition-colors">
+          Set Maintenance
+        </button>
+        <button :if={@selected_space.status == "maintenance"}
+          phx-click="mark_available" phx-value-id={@selected_space.id}
+          class="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 rounded-lg transition-colors">
+          Mark Available
+        </button>
+        <button phx-click="close_modal" class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </.modal>
+</div>
