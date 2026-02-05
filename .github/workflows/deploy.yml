@@ -57,7 +57,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "_build/prod/rel/jumbo_parking/*"
-          target: "/var/www/jumbo_parking/_build/prod/rel/jumbo_parking"
+          target: "/var/www/jumbo-parking/_build/prod/rel/jumbo_parking"
           strip_components: 4
 
       - name: Run migrations and restart
@@ -67,7 +67,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/jumbo_parking
+            cd /var/www/jumbo-parking
             set -a
             source .env
             set +a
