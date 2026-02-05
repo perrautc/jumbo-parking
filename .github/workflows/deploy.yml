@@ -1,0 +1,77 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  MIX_ENV: prod
+  ELIXIR_VERSION: '1.18.3'
+  OTP_VERSION: '27'
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: PRODUCTION
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: mix deps.get --only prod
+
+      - name: Clean and compile
+        run: |
+          mix clean
+          mix compile
+
+      - name: Build assets
+        run: mix assets.deploy
+
+      - name: Build release
+        run: mix release
+        env:
+          DATABASE_URL: "ecto://postgres:postgres@localhost/jumbo_parking_prod"
+          SECRET_KEY_BASE: "placeholder_secret_key_base_for_build_only_real_value_loaded_at_runtime_from_env"
+
+      - name: Copy release to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "_build/prod/rel/jumbo_parking/*"
+          target: "/var/www/jumbo_parking/_build/prod/rel/jumbo_parking"
+          strip_components: 4
+
+      - name: Run migrations and restart
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/jumbo_parking
+            set -a
+            source .env
+            set +a
+            _build/prod/rel/jumbo_parking/bin/jumbo_parking eval "JumboParking.Release.migrate"
+            sudo systemctl restart jumbo_parking
+            sleep 3
+            sudo systemctl status jumbo_parking --no-pager

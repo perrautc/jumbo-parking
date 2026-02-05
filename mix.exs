@@ -11,8 +11,20 @@ defmodule JumboParking.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
-    ]
+      releases: [
+        jumbo_parking: [
+          include_executables_for: [:unix]
+        ]
+      ]
+    ] ++ listeners()
+  end
+
+  defp listeners do
+    if Mix.env() == :dev do
+      [listeners: [Phoenix.CodeReloader]]
+    else
+      []
+    end
   end
 
   # Configuration for the OTP application.
