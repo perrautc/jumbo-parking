@@ -74,6 +74,14 @@ defmodule JumboParkingWeb.ParkingComponents do
     """
   end
 
+  defp nav_icon(%{name: "truck"} = assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17a2 2 0 002-2H4a2 2 0 002 2m2 0a2 2 0 104 0m-6 0H4m12 0a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2-3H7L5 7H2a2 2 0 00-2 2v6a2 2 0 002 2m14 0a2 2 0 104 0m-4 0h4" />
+    </svg>
+    """
+  end
+
   defp nav_icon(assigns) do
     ~H"""
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

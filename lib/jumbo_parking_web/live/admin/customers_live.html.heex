@@ -31,9 +31,9 @@
     <form phx-change="filter_vehicle">
       <select name="vehicle" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
         <option value="all" selected={@vehicle_filter == "all"}>All Vehicles</option>
-        <option value="truck" selected={@vehicle_filter == "truck"}>Truck</option>
-        <option value="rv" selected={@vehicle_filter == "rv"}>RV</option>
-        <option value="car" selected={@vehicle_filter == "car"}>Car</option>
+        <%= for {name, slug} <- @vehicle_types do %>
+          <option value={slug} selected={@vehicle_filter == slug}>{name}</option>
+        <% end %>
       </select>
     </form>
   </div>
@@ -141,9 +141,9 @@
           <div>
             <label class="block text-sm text-[#a0a0a0] mb-1">Vehicle Type</label>
             <select name="customer[vehicle_type]" class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
-              <option value="truck" selected={@edit_form[:vehicle_type].value == "truck"}>Truck</option>
-              <option value="rv" selected={@edit_form[:vehicle_type].value == "rv"}>RV</option>
-              <option value="car" selected={@edit_form[:vehicle_type].value == "car"}>Car</option>
+              <%= for {name, slug} <- @vehicle_types do %>
+                <option value={slug} selected={@edit_form[:vehicle_type].value == slug}>{name}</option>
+              <% end %>
             </select>
           </div>
           <div>

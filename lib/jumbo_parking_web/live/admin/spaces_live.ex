@@ -6,6 +6,7 @@ defmodule JumboParkingWeb.Admin.SpacesLive do
   @impl true
   def mount(params, _session, socket) do
     lots = Parking.list_lots()
+    vehicle_types = Parking.vehicle_type_options()
     initial_lot_id = params["lot_id"]
 
     filters = %{
@@ -26,6 +27,7 @@ defmodule JumboParkingWeb.Admin.SpacesLive do
       |> assign(:spaces, spaces)
       |> assign(:spaces_by_lot, spaces_by_lot)
       |> assign(:lots, lots)
+      |> assign(:vehicle_types, vehicle_types)
       |> assign(:stats, stats)
       |> assign(:search, "")
       |> assign(:lot_filter, initial_lot_id || "all")

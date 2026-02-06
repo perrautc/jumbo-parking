@@ -87,9 +87,9 @@
             <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Vehicle Type</label>
             <select name="pricing_plan[vehicle_type]" class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none">
               <option value="">Select type...</option>
-              <option value="truck" selected={f[:vehicle_type].value == "truck"}>truck</option>
-              <option value="rv" selected={f[:vehicle_type].value == "rv"}>rv</option>
-              <option value="car" selected={f[:vehicle_type].value == "car"}>car</option>
+              <%= for {name, slug} <- @vehicle_types do %>
+                <option value={slug} selected={f[:vehicle_type].value == slug}>{name}</option>
+              <% end %>
             </select>
           </div>
 

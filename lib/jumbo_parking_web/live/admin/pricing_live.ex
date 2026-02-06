@@ -7,12 +7,14 @@ defmodule JumboParkingWeb.Admin.PricingLive do
   @impl true
   def mount(_params, _session, socket) do
     plans = Parking.list_pricing_plans()
+    vehicle_types = Parking.vehicle_type_options()
 
     socket =
       socket
       |> assign(:page_title, "Pricing Plans")
       |> assign(:active_tab, :pricing)
       |> assign(:plans, plans)
+      |> assign(:vehicle_types, vehicle_types)
       |> assign(:show_modal, false)
       |> assign(:editing_plan, nil)
       |> assign(:form, nil)

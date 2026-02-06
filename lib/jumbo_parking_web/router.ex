@@ -68,6 +68,7 @@ defmodule JumboParkingWeb.Router do
       live "/lots", LotsLive, :index
       live "/spaces", SpacesLive, :index
       live "/pricing", PricingLive, :index
+      live "/vehicle-types", VehicleTypesLive, :index
     end
   end
 
