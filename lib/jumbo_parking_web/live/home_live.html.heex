@@ -274,30 +274,16 @@
 
       <!-- Vehicle Type Selector -->
       <div class="flex flex-wrap justify-center gap-4 mb-12 scroll-reveal">
-        <button
-          phx-click="select_vehicle"
-          phx-value-type="truck"
-          class={"flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-300 #{if @selected_vehicle == "truck", do: "border-[#c8d935] bg-[#c8d935]/10 text-white", else: "border-[#333] text-white/60 hover:border-[#c8d935]/50 hover:text-white"}"}
-        >
-          <span class="text-2xl">&#x1F69B;</span>
-          <span class="font-semibold">Truck & Trailer</span>
-        </button>
-        <button
-          phx-click="select_vehicle"
-          phx-value-type="rv"
-          class={"flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-300 #{if @selected_vehicle == "rv", do: "border-[#c8d935] bg-[#c8d935]/10 text-white", else: "border-[#333] text-white/60 hover:border-[#c8d935]/50 hover:text-white"}"}
-        >
-          <span class="text-2xl">&#x1F690;</span>
-          <span class="font-semibold">RV</span>
-        </button>
-        <button
-          phx-click="select_vehicle"
-          phx-value-type="car"
-          class={"flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-300 #{if @selected_vehicle == "car", do: "border-[#c8d935] bg-[#c8d935]/10 text-white", else: "border-[#333] text-white/60 hover:border-[#c8d935]/50 hover:text-white"}"}
-        >
-          <span class="text-2xl">&#x1F697;</span>
-          <span class="font-semibold">Car or SUV</span>
-        </button>
+        <%= for plan <- @pricing_plans do %>
+          <button
+            phx-click="select_vehicle"
+            phx-value-type={plan.vehicle_type}
+            class={"flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-300 #{if @selected_vehicle == plan.vehicle_type, do: "border-[#c8d935] bg-[#c8d935]/10 text-white", else: "border-[#333] text-white/60 hover:border-[#c8d935]/50 hover:text-white"}"}
+          >
+            <span class="text-2xl"><.pricing_icon icon={plan.icon || "default"} class="h-8 w-8" /></span>
+            <span class="font-semibold">{plan.vehicle_name}</span>
+          </button>
+        <% end %>
       </div>
 
       <!-- Pricing Cards -->

@@ -242,4 +242,73 @@ defmodule JumboParkingWeb.ParkingComponents do
     </svg>
     """
   end
+
+  # ── Pricing Icon ─────────────────────────────────────────
+  # Configurable icon for pricing plans - used in home page and booking form
+
+  attr :icon, :string, required: true
+  attr :class, :string, default: "h-8 w-8"
+
+  def pricing_icon(assigns) do
+    ~H"""
+    <%= case @icon do %>
+      <% "truck" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17a2 2 0 002-2H4a2 2 0 002 2m2 0a2 2 0 104 0m-6 0H4m12 0a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2-3H7L5 7H2a2 2 0 00-2 2v6a2 2 0 002 2m14 0a2 2 0 104 0m-4 0h4" />
+        </svg>
+      <% "truck-emoji" -> %>
+        <span class={@class} style="font-size: inherit; line-height: 1;">&#x1F69B;</span>
+      <% "rv" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      <% "rv-emoji" -> %>
+        <span class={@class} style="font-size: inherit; line-height: 1;">&#x1F690;</span>
+      <% "car" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0H3m10 0h4m0 0a1 1 0 001-1v-4l-3-4h-4" />
+        </svg>
+      <% "car-emoji" -> %>
+        <span class={@class} style="font-size: inherit; line-height: 1;">&#x1F697;</span>
+      <% "warehouse" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+        </svg>
+      <% "forklift" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM5 17H3V8l4-3h6l2 3h4v9h-2M11 8V5M15 8l-2-3" />
+        </svg>
+      <% "container" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      <% "trailer" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM3 17h1m16 0h1M3 17V7a2 2 0 012-2h14a2 2 0 012 2v10M5 12h14" />
+        </svg>
+      <% _ -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Returns the list of available pricing icons with their labels.
+  """
+  def pricing_icon_options do
+    [
+      {"truck", "Truck (SVG)"},
+      {"truck-emoji", "Truck (Emoji)"},
+      {"rv", "RV (SVG)"},
+      {"rv-emoji", "RV (Emoji)"},
+      {"car", "Car (SVG)"},
+      {"car-emoji", "Car (Emoji)"},
+      {"warehouse", "Warehouse"},
+      {"forklift", "Forklift"},
+      {"container", "Container"},
+      {"trailer", "Trailer"}
+    ]
+  end
 end
