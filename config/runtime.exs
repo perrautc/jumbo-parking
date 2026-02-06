@@ -23,6 +23,11 @@ end
 config :jumbo_parking, JumboParkingWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Configure Stripe API key from environment
+if stripe_key = System.get_env("STRIPE_SECRET_KEY") do
+  config :stripity_stripe, api_key: stripe_key
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -461,6 +461,26 @@ defmodule JumboParking.Parking do
     end
   end
 
+  def update_booking(%Booking{} = booking, attrs) do
+    result =
+      booking
+      |> Booking.changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, booking} ->
+        log_activity("booking_updated", "Booking updated to #{attrs[:status] || booking.status}", "booking", booking.id)
+        {:ok, booking}
+
+      error ->
+        error
+    end
+  end
+
+  def preload_booking(%Booking{} = booking, associations) do
+    Repo.preload(booking, associations)
+  end
+
   # ── Pricing Calculation ──────────────────────────────────
 
   def calculate_price(vehicle_type, plan) do
