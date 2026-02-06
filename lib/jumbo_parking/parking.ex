@@ -24,6 +24,20 @@ defmodule JumboParking.Parking do
     |> Repo.insert()
   end
 
+  def update_pricing_plan(%PricingPlan{} = plan, attrs) do
+    plan
+    |> PricingPlan.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_pricing_plan(%PricingPlan{} = plan) do
+    Repo.delete(plan)
+  end
+
+  def change_pricing_plan(%PricingPlan{} = plan, attrs \\ %{}) do
+    PricingPlan.changeset(plan, attrs)
+  end
+
   # ── Customers ─────────────────────────────────────────────
 
   def list_customers do
