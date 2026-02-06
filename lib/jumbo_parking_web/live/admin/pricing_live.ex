@@ -140,6 +140,8 @@ defmodule JumboParkingWeb.Admin.PricingLive do
   defp format_price(cents) when is_integer(cents), do: "$#{:erlang.float_to_binary(cents / 100, decimals: 2)}"
 
   defp price_to_dollars(nil), do: ""
+  defp price_to_dollars(""), do: ""
+  defp price_to_dollars(value) when is_binary(value), do: value
   defp price_to_dollars(cents) when is_integer(cents), do: :erlang.float_to_binary(cents / 100, decimals: 2)
 
 end
