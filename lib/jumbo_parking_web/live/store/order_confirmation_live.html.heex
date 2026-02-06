@@ -1,0 +1,139 @@
+<div class="min-h-screen bg-black">
+  <!-- Header -->
+  <header class="bg-[#111] border-b border-[#333]">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src={~p"/images/logo.png"} alt="Jumbo Parking" class="w-10 h-10 object-contain" />
+          <div>
+            <span class="text-lg font-bold text-white">Jumbo Parking</span>
+            <span class="text-[#c8d935] text-xs block -mt-1">Store</span>
+          </div>
+        </a>
+
+        <.link navigate={~p"/store"} class="text-white/70 hover:text-[#c8d935] transition-colors">
+          Continue Shopping
+        </.link>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-12">
+    <!-- Success Message -->
+    <div class="text-center mb-12">
+      <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h1 class="text-3xl lg:text-4xl font-bold text-white mb-4">Thank You for Your Order!</h1>
+      <p class="text-white/60">Your order has been confirmed and is being processed.</p>
+    </div>
+
+    <!-- Order Details -->
+    <div class="bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-hidden">
+      <!-- Order Header -->
+      <div class="p-6 border-b border-[#333]">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="text-white/60 text-sm">Order Number</p>
+            <p class="text-white font-bold text-xl">{@order.order_number}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-white/60 text-sm">Order Status</p>
+            <span class={"inline-block px-3 py-1 rounded-full text-sm font-semibold #{status_color(@order.status)}"}>
+              {status_label(@order.status)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="p-6 border-b border-[#333]">
+        <h2 class="text-white font-semibold mb-4">Order Items</h2>
+        <div class="space-y-4">
+          <div :for={item <- @order.items} class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-lg overflow-hidden bg-[#111] flex-shrink-0">
+              <%= if item.variant && item.variant.merch_item && item.variant.merch_item.image_url do %>
+                <img src={item.variant.merch_item.image_url} alt="" class="w-full h-full object-cover" />
+              <% else %>
+                <div class="w-full h-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+              <% end %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white font-medium">{item.product_name}</p>
+              <p class="text-white/50 text-sm">{item.variant_name}</p>
+              <p class="text-white/50 text-sm">Qty: {item.quantity}</p>
+            </div>
+            <p class="text-white font-medium">{format_price(item.line_total)}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="p-6 border-b border-[#333]">
+        <div class="space-y-2">
+          <div class="flex justify-between text-white/70">
+            <span>Subtotal</span>
+            <span>{format_price(@order.subtotal)}</span>
+          </div>
+          <div class="flex justify-between text-white/70">
+            <span>Shipping</span>
+            <span>
+              <%= if @order.shipping_cost == 0 do %>
+                <span class="text-green-400">Free</span>
+              <% else %>
+                {format_price(@order.shipping_cost)}
+              <% end %>
+            </span>
+          </div>
+          <%= if @order.tax && @order.tax > 0 do %>
+            <div class="flex justify-between text-white/70">
+              <span>Tax</span>
+              <span>{format_price(@order.tax)}</span>
+            </div>
+          <% end %>
+          <div class="flex justify-between text-white font-bold text-lg pt-2 border-t border-[#333]">
+            <span>Total</span>
+            <span class="text-[#c8d935]">{format_price(@order.total)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="p-6">
+        <h2 class="text-white font-semibold mb-4">Shipping Address</h2>
+        <div class="text-white/70">
+          <p>{@order.shipping_name}</p>
+          <p>{@order.shipping_address1}</p>
+          <p :if={@order.shipping_address2}>{@order.shipping_address2}</p>
+          <p>{@order.shipping_city}, {@order.shipping_state} {@order.shipping_zip}</p>
+          <p>{@order.shipping_country}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Email Notice -->
+    <div class="mt-8 p-6 bg-[#1a1a1a] border border-[#333] rounded-2xl text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-[#c8d935] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      <p class="text-white mb-2">A confirmation email has been sent to:</p>
+      <p class="text-[#c8d935] font-semibold">{@order.email}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex flex-wrap gap-4 justify-center">
+      <.link navigate={~p"/store"} class="bg-[#c8d935] hover:bg-[#d4e54a] text-black font-semibold px-8 py-3 rounded-xl transition-colors">
+        Continue Shopping
+      </.link>
+      <.link navigate={~p"/"} class="border border-[#333] text-white hover:border-[#c8d935] font-semibold px-8 py-3 rounded-xl transition-colors">
+        Back to Home
+      </.link>
+    </div>
+  </main>
+</div>

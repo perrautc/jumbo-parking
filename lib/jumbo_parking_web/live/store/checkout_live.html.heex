@@ -1,0 +1,261 @@
+<div class="min-h-screen bg-black">
+  <!-- Header -->
+  <header class="bg-[#111] border-b border-[#333]">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src={~p"/images/logo.png"} alt="Jumbo Parking" class="w-10 h-10 object-contain" />
+          <div>
+            <span class="text-lg font-bold text-white">Jumbo Parking</span>
+            <span class="text-[#c8d935] text-xs block -mt-1">Store</span>
+          </div>
+        </a>
+
+        <.link navigate={~p"/store/cart"} class="text-white/70 hover:text-[#c8d935] transition-colors flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Cart
+        </.link>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-12">
+    <h1 class="text-3xl lg:text-4xl font-bold text-white mb-8">Checkout</h1>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Checkout Form -->
+      <div class="lg:col-span-2">
+        <.form for={@form} phx-change="validate" phx-submit="submit" class="space-y-8">
+          <!-- Contact Information -->
+          <div class="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-white mb-6">Contact Information</h2>
+
+            <div>
+              <label for="checkout_email" class="block text-white/70 text-sm mb-2">Email Address</label>
+              <input
+                type="email"
+                name="checkout[email]"
+                id="checkout_email"
+                value={@form[:email].value}
+                class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:email], do: "border-red-500", else: "border-[#333]"}"}
+                placeholder="your@email.com"
+              />
+              <p :if={@errors[:email]} class="text-red-400 text-sm mt-1">{@errors[:email]}</p>
+            </div>
+          </div>
+
+          <!-- Shipping Address -->
+          <div class="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-white mb-6">Shipping Address</h2>
+
+            <div class="grid gap-4">
+              <div>
+                <label for="checkout_shipping_name" class="block text-white/70 text-sm mb-2">Full Name</label>
+                <input
+                  type="text"
+                  name="checkout[shipping_name]"
+                  id="checkout_shipping_name"
+                  value={@form[:shipping_name].value}
+                  class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:shipping_name], do: "border-red-500", else: "border-[#333]"}"}
+                  placeholder="John Doe"
+                />
+                <p :if={@errors[:shipping_name]} class="text-red-400 text-sm mt-1">{@errors[:shipping_name]}</p>
+              </div>
+
+              <div>
+                <label for="checkout_shipping_address1" class="block text-white/70 text-sm mb-2">Address</label>
+                <input
+                  type="text"
+                  name="checkout[shipping_address1]"
+                  id="checkout_shipping_address1"
+                  value={@form[:shipping_address1].value}
+                  class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:shipping_address1], do: "border-red-500", else: "border-[#333]"}"}
+                  placeholder="123 Main St"
+                />
+                <p :if={@errors[:shipping_address1]} class="text-red-400 text-sm mt-1">{@errors[:shipping_address1]}</p>
+              </div>
+
+              <div>
+                <label for="checkout_shipping_address2" class="block text-white/70 text-sm mb-2">Apartment, suite, etc. (optional)</label>
+                <input
+                  type="text"
+                  name="checkout[shipping_address2]"
+                  id="checkout_shipping_address2"
+                  value={@form[:shipping_address2].value}
+                  class="w-full bg-[#111] border border-[#333] rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0"
+                  placeholder="Apt 4B"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="checkout_shipping_city" class="block text-white/70 text-sm mb-2">City</label>
+                  <input
+                    type="text"
+                    name="checkout[shipping_city]"
+                    id="checkout_shipping_city"
+                    value={@form[:shipping_city].value}
+                    class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:shipping_city], do: "border-red-500", else: "border-[#333]"}"}
+                    placeholder="Columbia"
+                  />
+                  <p :if={@errors[:shipping_city]} class="text-red-400 text-sm mt-1">{@errors[:shipping_city]}</p>
+                </div>
+
+                <div>
+                  <label for="checkout_shipping_state" class="block text-white/70 text-sm mb-2">State</label>
+                  <select
+                    name="checkout[shipping_state]"
+                    id="checkout_shipping_state"
+                    class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:shipping_state], do: "border-red-500", else: "border-[#333]"}"}
+                  >
+                    <option value="">Select State</option>
+                    <option :for={{name, abbr} <- us_states()} value={abbr} selected={@form[:shipping_state].value == abbr}>
+                      {name}
+                    </option>
+                  </select>
+                  <p :if={@errors[:shipping_state]} class="text-red-400 text-sm mt-1">{@errors[:shipping_state]}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="checkout_shipping_zip" class="block text-white/70 text-sm mb-2">ZIP Code</label>
+                  <input
+                    type="text"
+                    name="checkout[shipping_zip]"
+                    id="checkout_shipping_zip"
+                    value={@form[:shipping_zip].value}
+                    class={"w-full bg-[#111] border rounded-lg px-4 py-3 text-white focus:border-[#c8d935] focus:ring-0 #{if @errors[:shipping_zip], do: "border-red-500", else: "border-[#333]"}"}
+                    placeholder="29201"
+                  />
+                  <p :if={@errors[:shipping_zip]} class="text-red-400 text-sm mt-1">{@errors[:shipping_zip]}</p>
+                </div>
+
+                <div>
+                  <label for="checkout_shipping_country" class="block text-white/70 text-sm mb-2">Country</label>
+                  <input
+                    type="text"
+                    name="checkout[shipping_country]"
+                    id="checkout_shipping_country"
+                    value="United States"
+                    disabled
+                    class="w-full bg-[#111] border border-[#333] rounded-lg px-4 py-3 text-white/50 cursor-not-allowed"
+                  />
+                  <input type="hidden" name="checkout[shipping_country]" value="US" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button (Mobile) -->
+          <div class="lg:hidden">
+            <button
+              type="submit"
+              disabled={@submitting}
+              class="w-full bg-[#c8d935] hover:bg-[#d4e54a] disabled:bg-[#333] disabled:cursor-not-allowed text-black font-bold py-4 rounded-xl text-lg transition-all flex items-center justify-center gap-2"
+            >
+              <%= if @submitting do %>
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              <% else %>
+                Pay {format_price(total(@cart))}
+              <% end %>
+            </button>
+          </div>
+        </.form>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="lg:col-span-1">
+        <div class="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6 sticky top-6">
+          <h2 class="text-xl font-bold text-white mb-6">Order Summary</h2>
+
+          <!-- Items -->
+          <div class="space-y-4 mb-6">
+            <div :for={item <- @cart.items} class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-lg overflow-hidden bg-[#111] flex-shrink-0 relative">
+                <%= if item.variant.merch_item && item.variant.merch_item.image_url do %>
+                  <img src={item.variant.merch_item.image_url} alt="" class="w-full h-full object-cover" />
+                <% else %>
+                  <div class="w-full h-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  </div>
+                <% end %>
+                <span class="absolute -top-1 -right-1 bg-[#c8d935] text-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {item.quantity}
+                </span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-white text-sm font-medium truncate">{item.variant.merch_item && item.variant.merch_item.name}</p>
+                <p class="text-white/50 text-xs">{JumboParking.Store.ProductVariant.display_name(item.variant)}</p>
+              </div>
+              <p class="text-white font-medium">{format_price(item.quantity * item.unit_price)}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-[#333] pt-4 space-y-3">
+            <div class="flex justify-between text-white/70">
+              <span>Subtotal</span>
+              <span>{format_price(subtotal(@cart))}</span>
+            </div>
+            <div class="flex justify-between text-white/70">
+              <span>Shipping</span>
+              <span>
+                <%= if shipping_cost(@cart) == 0 do %>
+                  <span class="text-green-400">Free</span>
+                <% else %>
+                  {format_price(shipping_cost(@cart))}
+                <% end %>
+              </span>
+            </div>
+            <div class="flex justify-between text-white font-bold text-lg pt-3 border-t border-[#333]">
+              <span>Total</span>
+              <span class="text-[#c8d935]">{format_price(total(@cart))}</span>
+            </div>
+          </div>
+
+          <!-- Free Shipping Notice -->
+          <%= if shipping_cost(@cart) > 0 do %>
+            <div class="mt-4 p-3 bg-[#c8d935]/10 border border-[#c8d935]/30 rounded-lg">
+              <p class="text-[#c8d935] text-sm text-center">
+                Add {format_price(5000 - subtotal(@cart))} more for free shipping!
+              </p>
+            </div>
+          <% end %>
+
+          <!-- Submit Button (Desktop) -->
+          <div class="hidden lg:block mt-6">
+            <button
+              form="checkout-form"
+              type="submit"
+              disabled={@submitting}
+              phx-click="submit"
+              class="w-full bg-[#c8d935] hover:bg-[#d4e54a] disabled:bg-[#333] disabled:cursor-not-allowed text-black font-bold py-4 rounded-xl text-lg transition-all flex items-center justify-center gap-2"
+            >
+              <%= if @submitting do %>
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              <% else %>
+                Pay {format_price(total(@cart))}
+              <% end %>
+            </button>
+          </div>
+
+          <p class="text-white/40 text-xs text-center mt-4">
+            Secure checkout powered by Stripe
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

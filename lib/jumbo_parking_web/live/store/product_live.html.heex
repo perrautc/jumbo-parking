@@ -1,0 +1,203 @@
+<div class="min-h-screen bg-black">
+  <!-- Header -->
+  <header class="bg-[#111] border-b border-[#333]">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src={~p"/images/logo.png"} alt="Jumbo Parking" class="w-10 h-10 object-contain" />
+          <div>
+            <span class="text-lg font-bold text-white">Jumbo Parking</span>
+            <span class="text-[#c8d935] text-xs block -mt-1">Store</span>
+          </div>
+        </a>
+
+        <div class="flex items-center gap-6">
+          <.link navigate={~p"/store"} class="text-white/70 hover:text-[#c8d935] transition-colors">
+            All Products
+          </.link>
+          <.link navigate={~p"/store/cart"} class="relative flex items-center gap-2 text-white hover:text-[#c8d935] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span class="hidden sm:inline">Cart</span>
+            <%= if @cart && Store.cart_item_count(@cart) > 0 do %>
+              <span class="absolute -top-2 -right-2 bg-[#c8d935] text-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {Store.cart_item_count(@cart)}
+              </span>
+            <% end %>
+          </.link>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+      <ol class="flex items-center gap-2 text-sm">
+        <li><.link navigate={~p"/store"} class="text-white/60 hover:text-[#c8d935]">Store</.link></li>
+        <li class="text-white/40">/</li>
+        <li class="text-white">{@product.name}</li>
+      </ol>
+    </nav>
+
+    <div class="grid lg:grid-cols-2 gap-12">
+      <!-- Product Image -->
+      <div class="relative aspect-square rounded-2xl overflow-hidden bg-[#111] border border-[#333]">
+        <%= if @product.image_url && @product.image_url != "" do %>
+          <img src={@product.image_url} alt={@product.name} class="w-full h-full object-cover" />
+        <% else %>
+          <div class="w-full h-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+        <% end %>
+        <div :if={@product.badge && @product.badge != ""} class="absolute top-6 left-6">
+          <span class="bg-[#c8d935] text-black px-4 py-2 rounded-full text-sm font-bold capitalize">{@product.badge}</span>
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div>
+        <h1 class="text-3xl lg:text-4xl font-bold text-white mb-4">{@product.name}</h1>
+
+        <p class="text-white/70 mb-6">{@product.description}</p>
+
+        <!-- Price -->
+        <div class="text-3xl font-bold text-[#c8d935] mb-8">
+          <%= if @selected_variant do %>
+            {format_price(variant_price(@selected_variant, @product))}
+          <% else %>
+            {format_price(@product.price)}
+          <% end %>
+        </div>
+
+        <!-- Size Selection -->
+        <%= if length(@sizes) > 0 do %>
+          <div class="mb-6">
+            <label class="block text-white font-semibold mb-3">Size</label>
+            <div class="flex flex-wrap gap-3">
+              <button
+                :for={size <- @sizes}
+                phx-click="select_size"
+                phx-value-size={size}
+                class={"px-6 py-3 rounded-lg border-2 font-semibold transition-all #{if @selected_size == size, do: "border-[#c8d935] bg-[#c8d935]/10 text-[#c8d935]", else: "border-[#333] text-white/70 hover:border-[#c8d935]/50"}"}
+              >
+                {size}
+              </button>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Color Selection -->
+        <%= if length(@colors) > 0 do %>
+          <div class="mb-6">
+            <label class="block text-white font-semibold mb-3">Color</label>
+            <div class="flex flex-wrap gap-3">
+              <button
+                :for={color <- @colors}
+                phx-click="select_color"
+                phx-value-color={color}
+                class={"px-6 py-3 rounded-lg border-2 font-semibold transition-all #{if @selected_color == color, do: "border-[#c8d935] bg-[#c8d935]/10 text-[#c8d935]", else: "border-[#333] text-white/70 hover:border-[#c8d935]/50"}"}
+              >
+                {color}
+              </button>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Quantity -->
+        <div class="mb-8">
+          <label class="block text-white font-semibold mb-3">Quantity</label>
+          <div class="flex items-center gap-4">
+            <button
+              phx-click="decrement_quantity"
+              class="w-12 h-12 rounded-lg bg-[#1a1a1a] border border-[#333] text-white hover:border-[#c8d935] transition-colors flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+              </svg>
+            </button>
+            <input
+              type="number"
+              min="1"
+              value={@quantity}
+              phx-change="update_quantity"
+              name="quantity"
+              class="w-20 h-12 text-center bg-[#1a1a1a] border border-[#333] rounded-lg text-white text-lg focus:border-[#c8d935] focus:ring-0"
+            />
+            <button
+              phx-click="increment_quantity"
+              class="w-12 h-12 rounded-lg bg-[#1a1a1a] border border-[#333] text-white hover:border-[#c8d935] transition-colors flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add to Cart Button -->
+        <%= if @selected_variant do %>
+          <button
+            phx-click="add_to_cart"
+            class="w-full bg-[#c8d935] hover:bg-[#d4e54a] text-black font-bold py-4 px-8 rounded-xl text-lg transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Add to Cart
+          </button>
+        <% else %>
+          <button disabled class="w-full bg-[#333] text-white/50 font-bold py-4 px-8 rounded-xl text-lg cursor-not-allowed">
+            Select Options
+          </button>
+        <% end %>
+
+        <!-- Added to Cart Confirmation -->
+        <div :if={@added_to_cart} class="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+          <div class="flex items-center gap-3 text-green-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span class="font-semibold">Added to cart!</span>
+          </div>
+          <div class="mt-3 flex gap-3">
+            <.link navigate={~p"/store/cart"} class="flex-1 text-center bg-[#c8d935] text-black font-semibold py-2 rounded-lg hover:bg-[#d4e54a] transition-colors">
+              View Cart
+            </.link>
+            <.link navigate={~p"/store"} class="flex-1 text-center border border-[#333] text-white font-semibold py-2 rounded-lg hover:border-[#c8d935] transition-colors">
+              Continue Shopping
+            </.link>
+          </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="mt-8 pt-8 border-t border-[#333]">
+          <h3 class="text-white font-semibold mb-4">Product Details</h3>
+          <ul class="space-y-2 text-white/60">
+            <li :if={@product.sku} class="flex items-center gap-2">
+              <span class="text-white/40">SKU:</span> {@product.sku}
+            </li>
+            <li :if={@selected_variant && @selected_variant.sku} class="flex items-center gap-2">
+              <span class="text-white/40">Variant SKU:</span> {@selected_variant.sku}
+            </li>
+            <li class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c8d935]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Free shipping on orders over $50
+            </li>
+            <li class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c8d935]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              30-day return policy
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

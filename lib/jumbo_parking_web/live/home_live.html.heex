@@ -501,21 +501,20 @@
               <span class="text-[#c8d935] font-bold text-lg">{format_merch_price(item.price)}</span>
             </div>
             <p class="text-white/60 text-sm mb-4">{item.description || "Quality merchandise"}</p>
-            <%= if item.external_url && item.external_url != "" do %>
-              <a href={item.external_url} target="_blank" rel="noopener" class="block w-full bg-[#c8d935] hover:bg-[#d4e54a] text-black font-semibold py-3 rounded-lg transition-all duration-300 text-center">
-                Shop Now
-              </a>
-            <% else %>
-              <button class="w-full bg-[#1a1a1a] border border-[#c8d935] text-[#c8d935] hover:bg-[#c8d935] hover:text-black font-semibold py-3 rounded-lg transition-all duration-300">
-                Coming Soon
-              </button>
-            <% end %>
+            <.link navigate={~p"/store/product/#{item.id}"} class="block w-full bg-[#c8d935] hover:bg-[#d4e54a] text-black font-semibold py-3 rounded-lg transition-all duration-300 text-center">
+              Shop Now
+            </.link>
           </div>
         </div>
       </div>
 
       <div class="text-center mt-12 scroll-reveal">
-        <p class="text-white/50 text-sm">More merchandise coming soon. Stay tuned!</p>
+        <.link navigate={~p"/store"} class="inline-flex items-center gap-2 text-[#c8d935] hover:text-white transition-colors">
+          View All Products
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </.link>
       </div>
     </div>
   </section>

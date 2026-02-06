@@ -85,13 +85,26 @@
 
             <p class="text-[#a0a0a0] text-sm mb-4 line-clamp-2">{item.description || "No description"}</p>
 
-            <%= if item.sku do %>
-              <p class="text-[#666] text-xs mb-3">SKU: {item.sku}</p>
-            <% end %>
+            <div class="flex items-center gap-2 text-xs text-[#666] mb-3">
+              <%= if item.sku do %>
+                <span>SKU: {item.sku}</span>
+                <span class="text-[#333]">|</span>
+              <% end %>
+              <span class={"px-2 py-0.5 rounded #{if item.fulfillment_type == "printful", do: "bg-purple-500/20 text-purple-400", else: "bg-blue-500/20 text-blue-400"}"}>
+                {item.fulfillment_type || "in_stock"}
+              </span>
+              <span class="text-[#333]">|</span>
+              <span>{length(item.variants)} variants</span>
+            </div>
 
             <div class="flex gap-2">
               <button phx-click="edit" phx-value-id={item.id} class="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-2 rounded-lg transition-colors text-sm">
                 Edit
+              </button>
+              <button phx-click="manage_variants" phx-value-id={item.id} class="px-3 py-2 text-[#c8d935] hover:bg-[#c8d935]/10 rounded-lg transition-colors" title="Manage Variants">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
               </button>
               <button phx-click="open_delete" phx-value-id={item.id} class="px-3 py-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -178,6 +191,15 @@
           </div>
         </div>
 
+        <div>
+          <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Fulfillment Type</label>
+          <select name="merch_item[fulfillment_type]" class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
+            <option value="in_stock" selected={f[:fulfillment_type].value in [nil, "", "in_stock"]}>In Stock (Manual Shipping)</option>
+            <option value="printful" selected={f[:fulfillment_type].value == "printful"}>Printful (Print on Demand)</option>
+          </select>
+          <p class="text-xs text-[#666] mt-1">Choose how this product is fulfilled</p>
+        </div>
+
         <div class="flex gap-3 pt-4">
           <button type="submit" class="flex-1 bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium py-2.5 rounded-lg transition-colors">
             {if @editing_item, do: "Update Item", else: "Create Item"}
@@ -210,6 +232,115 @@
         </button>
         <button phx-click="close_modal" class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors">
           Cancel
+        </button>
+      </div>
+    </div>
+  </.modal>
+
+  <!-- Variants Modal -->
+  <.modal id="variants-modal" show={@show_variants_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-white">Manage Variants</h3>
+          <p :if={@selected_item} class="text-[#a0a0a0] text-sm">{@selected_item.name}</p>
+        </div>
+        <button phx-click="new_variant" class="bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Variant
+        </button>
+      </div>
+
+      <!-- Variant Form -->
+      <div :if={@show_variant_form} class="mb-6 p-4 bg-[#0a0a0a] rounded-xl border border-[#333]">
+        <h4 class="text-white font-semibold mb-4">{if @editing_variant, do: "Edit Variant", else: "New Variant"}</h4>
+        <.form :let={f} for={@variant_form} phx-change="validate_variant" phx-submit="save_variant" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#a0a0a0] mb-1">SKU *</label>
+              <input type="text" name="product_variant[sku]" value={f[:sku].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="SHIRT-BLK-L" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Name</label>
+              <input type="text" name="product_variant[name]" value={f[:name].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="Black / Large" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Size</label>
+              <input type="text" name="product_variant[size]" value={f[:size].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="L" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Color</label>
+              <input type="text" name="product_variant[color]" value={f[:color].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="Black" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Price ($)</label>
+              <input type="number" step="0.01" name="product_variant[price]" value={price_to_dollars(f[:price].value)}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="29.99" />
+              <p class="text-xs text-[#666] mt-1">Leave blank to use product price</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium py-2.5 rounded-lg transition-colors">
+              {if @editing_variant, do: "Update", else: "Create"}
+            </button>
+            <button type="button" phx-click="cancel_variant_form" class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors">
+              Cancel
+            </button>
+          </div>
+        </.form>
+      </div>
+
+      <!-- Variants List -->
+      <div class="space-y-2">
+        <%= if @selected_item && Enum.empty?(@selected_item.variants) do %>
+          <div class="text-center py-8 text-[#666]">
+            <p>No variants yet. Add sizes, colors, or other options.</p>
+          </div>
+        <% else %>
+          <div :if={@selected_item} :for={variant <- @selected_item.variants} class="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg border border-[#333]">
+            <div class="flex items-center gap-4">
+              <div>
+                <p class="text-white font-medium">{variant.name || "#{variant.color || ""} / #{variant.size || ""}" |> String.trim(" / ")}</p>
+                <p class="text-[#666] text-xs">SKU: {variant.sku}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-[#c8d935] font-medium">{if variant.price, do: format_price(variant.price), else: "Product price"}</span>
+              <div class="flex gap-1">
+                <button phx-click="edit_variant" phx-value-id={variant.id} class="p-2 text-[#a0a0a0] hover:text-[#c8d935] hover:bg-[#c8d935]/10 rounded transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button phx-click="delete_variant" phx-value-id={variant.id} data-confirm="Are you sure you want to delete this variant?" class="p-2 text-red-400 hover:bg-red-400/10 rounded transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex justify-end mt-6">
+        <button phx-click="close_modal" class="border border-[#333333] text-white px-6 py-2.5 rounded-lg hover:bg-white/5 transition-colors">
+          Done
         </button>
       </div>
     </div>

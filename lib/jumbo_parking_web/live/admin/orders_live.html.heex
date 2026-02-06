@@ -1,0 +1,232 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Orders</h1>
+      <p class="text-[#a0a0a0]">Manage merchandise orders and fulfillment</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-col sm:flex-row gap-4">
+    <!-- Search -->
+    <div class="flex-1">
+      <form phx-change="search" phx-submit="search">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#666]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            name="search"
+            value={@search}
+            placeholder="Search orders..."
+            class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-[#666] focus:border-[#c8d935] focus:ring-0"
+          />
+        </div>
+      </form>
+    </div>
+
+    <!-- Status Filter -->
+    <form phx-change="filter">
+      <select name="status" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] focus:ring-0">
+        <option value="all" selected={@filter_status == "all"}>All Statuses</option>
+        <option :for={status <- statuses()} value={status} selected={@filter_status == status}>
+          {status_label(status)}
+        </option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="bg-[#111] border border-[#333] rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-[#333]">
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Order</th>
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Customer</th>
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Items</th>
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Total</th>
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Status</th>
+            <th class="text-left text-[#a0a0a0] text-sm font-medium px-6 py-4">Date</th>
+            <th class="text-right text-[#a0a0a0] text-sm font-medium px-6 py-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= if length(@orders) == 0 do %>
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-[#666]">
+                No orders found
+              </td>
+            </tr>
+          <% else %>
+            <tr :for={order <- @orders} class="border-b border-[#333] last:border-b-0 hover:bg-[#1a1a1a] transition-colors">
+              <td class="px-6 py-4">
+                <span class="text-white font-medium">{order.order_number}</span>
+              </td>
+              <td class="px-6 py-4">
+                <div>
+                  <p class="text-white">{order.shipping_name}</p>
+                  <p class="text-[#666] text-sm">{order.email}</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-white">{length(order.items)} items</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-[#c8d935] font-medium">{format_price(order.total)}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class={"inline-block px-2.5 py-1 rounded-full text-xs font-medium #{status_color(order.status)}"}>
+                  {status_label(order.status)}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-[#a0a0a0] text-sm">{format_date(order.inserted_at)}</span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    phx-click="view_order"
+                    phx-value-id={order.id}
+                    class="p-2 text-[#a0a0a0] hover:text-[#c8d935] hover:bg-[#c8d935]/10 rounded-lg transition-colors"
+                    title="View Details"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <%= if order.status == "paid" do %>
+                    <button
+                      phx-click="process_fulfillment"
+                      phx-value-id={order.id}
+                      class="p-2 text-[#a0a0a0] hover:text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
+                      title="Process Fulfillment"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                      </svg>
+                    </button>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div :if={@show_order_modal && @selected_order} class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" phx-click="close_modal">
+    <div class="bg-[#111] border border-[#333] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" phx-click-away="close_modal">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-[#333]">
+        <div>
+          <h2 class="text-xl font-bold text-white">Order {@selected_order.order_number}</h2>
+          <p class="text-[#a0a0a0] text-sm">{format_date(@selected_order.inserted_at)}</p>
+        </div>
+        <button phx-click="close_modal" class="p-2 text-[#666] hover:text-white hover:bg-[#333] rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 space-y-6">
+        <!-- Status -->
+        <div class="flex items-center justify-between">
+          <span class="text-[#a0a0a0]">Status</span>
+          <div class="flex items-center gap-3">
+            <span class={"inline-block px-3 py-1 rounded-full text-sm font-medium #{status_color(@selected_order.status)}"}>
+              {status_label(@selected_order.status)}
+            </span>
+            <select
+              phx-change="update_status"
+              phx-value-id={@selected_order.id}
+              name="status"
+              class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-1.5 text-white text-sm focus:border-[#c8d935] focus:ring-0"
+            >
+              <option :for={status <- statuses()} value={status} selected={@selected_order.status == status}>
+                {status_label(status)}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Customer -->
+        <div>
+          <h3 class="text-white font-semibold mb-2">Customer</h3>
+          <div class="bg-[#1a1a1a] rounded-lg p-4 text-[#a0a0a0]">
+            <p class="text-white">{@selected_order.email}</p>
+          </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div>
+          <h3 class="text-white font-semibold mb-2">Shipping Address</h3>
+          <div class="bg-[#1a1a1a] rounded-lg p-4 text-[#a0a0a0]">
+            <p>{@selected_order.shipping_name}</p>
+            <p>{@selected_order.shipping_address1}</p>
+            <p :if={@selected_order.shipping_address2}>{@selected_order.shipping_address2}</p>
+            <p>{@selected_order.shipping_city}, {@selected_order.shipping_state} {@selected_order.shipping_zip}</p>
+            <p>{@selected_order.shipping_country}</p>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div>
+          <h3 class="text-white font-semibold mb-2">Items</h3>
+          <div class="bg-[#1a1a1a] rounded-lg overflow-hidden">
+            <div :for={item <- @selected_order.items} class="flex items-center gap-4 p-4 border-b border-[#333] last:border-b-0">
+              <div class="flex-1">
+                <p class="text-white">{item.product_name}</p>
+                <p class="text-[#666] text-sm">{item.variant_name} - SKU: {item.sku}</p>
+                <p class="text-[#666] text-sm">Qty: {item.quantity}</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class={"text-xs px-2 py-0.5 rounded #{if item.fulfillment_type == "printful", do: "bg-purple-500/20 text-purple-400", else: "bg-blue-500/20 text-blue-400"}"}>
+                    {item.fulfillment_type || "in_stock"}
+                  </span>
+                  <span :if={item.tracking_number} class="text-xs text-green-400">
+                    Tracking: {item.tracking_number}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-white font-medium">{format_price(item.line_total)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div>
+          <h3 class="text-white font-semibold mb-2">Summary</h3>
+          <div class="bg-[#1a1a1a] rounded-lg p-4 space-y-2">
+            <div class="flex justify-between text-[#a0a0a0]">
+              <span>Subtotal</span>
+              <span>{format_price(@selected_order.subtotal)}</span>
+            </div>
+            <div class="flex justify-between text-[#a0a0a0]">
+              <span>Shipping</span>
+              <span>{format_price(@selected_order.shipping_cost)}</span>
+            </div>
+            <%= if @selected_order.tax && @selected_order.tax > 0 do %>
+              <div class="flex justify-between text-[#a0a0a0]">
+                <span>Tax</span>
+                <span>{format_price(@selected_order.tax)}</span>
+              </div>
+            <% end %>
+            <div class="flex justify-between text-white font-bold text-lg pt-2 border-t border-[#333]">
+              <span>Total</span>
+              <span class="text-[#c8d935]">{format_price(@selected_order.total)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
