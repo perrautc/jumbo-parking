@@ -27,54 +27,11 @@ defmodule JumboParkingWeb.HomeLive do
     }
   ]
 
-  @merch_items [
-    %{
-      name: "Classic Logo Tee",
-      description: "Premium black cotton t-shirt with the Jumbo Parking logo front and center.",
-      price: "$29.99",
-      image: "merch-tshirt.png",
-      badge: "Popular"
-    },
-    %{
-      name: "Snapback Hat",
-      description: "Black snapback cap with embroidered Jumbo Parking logo. One size fits all.",
-      price: "$24.99",
-      image: "merch-hat.png",
-      badge: nil
-    },
-    %{
-      name: "Coffee Mug",
-      description: "Start your morning right with this 11oz ceramic mug featuring our signature branding.",
-      price: "$14.99",
-      image: "merch-mug.png",
-      badge: nil
-    },
-    %{
-      name: "Executive Pen",
-      description: "Sleek black ballpoint pen with Jumbo Parking branding. Perfect for the office.",
-      price: "$9.99",
-      image: "merch-pen.png",
-      badge: nil
-    },
-    %{
-      name: "Vehicle Decal",
-      description: "Durable vinyl decal for your car or truck window. Weather-resistant and long-lasting.",
-      price: "$7.99",
-      image: "merch-decal.png",
-      badge: "New"
-    },
-    %{
-      name: "Bumper Sticker Pack",
-      description: "Set of 3 premium stickers featuring Jumbo Parking designs. Great for laptops too.",
-      price: "$5.99",
-      image: "merch-decal.png",
-      badge: nil
-    }
-  ]
-
   @impl true
   def mount(_params, _session, socket) do
     pricing_plans = Parking.list_pricing_plans()
+    merch_items = Parking.list_active_merch_items()
+    merch_enabled = Parking.get_setting_bool("merch_store_enabled")
 
     socket =
       socket
@@ -83,7 +40,8 @@ defmodule JumboParkingWeb.HomeLive do
       |> assign(:selected_vehicle, "truck")
       |> assign(:testimonial_index, 0)
       |> assign(:testimonials, @testimonials)
-      |> assign(:merch_items, @merch_items)
+      |> assign(:merch_items, merch_items)
+      |> assign(:merch_enabled, merch_enabled)
       |> assign(:mobile_menu_open, false)
 
     {:ok, socket}
@@ -133,4 +91,8 @@ defmodule JumboParkingWeb.HomeLive do
   end
 
   defp monthly_equivalent(_), do: "$0"
+
+  defp format_merch_price(nil), do: "$0"
+  defp format_merch_price(cents) when is_integer(cents), do: "$#{:erlang.float_to_binary(cents / 100, decimals: 2)}"
+  defp format_merch_price(_), do: "$0"
 end
