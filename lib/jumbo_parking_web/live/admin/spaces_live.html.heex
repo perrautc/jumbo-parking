@@ -1,8 +1,30 @@
 <div>
-  <h1 class="text-2xl font-bold text-white mb-8">Parking Spaces</h1>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <h1 class="text-2xl font-bold text-white">Parking Spaces</h1>
+    <div class="flex items-center gap-2">
+      <button
+        phx-click="open_create"
+        class="bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Space
+      </button>
+      <button
+        phx-click="open_bulk"
+        class="bg-[#111111] hover:bg-[#222222] text-white font-medium px-4 py-2.5 rounded-lg border border-[#333333] transition-colors flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" />
+        </svg>
+        Bulk Create
+      </button>
+    </div>
+  </div>
 
   <!-- Quick Stats -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+  <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
     <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-4 text-center">
       <p class="text-2xl font-bold text-white">{@stats.total}</p>
       <p class="text-xs text-[#a0a0a0]">Total</p>
@@ -19,6 +41,10 @@
       <p class="text-2xl font-bold text-blue-400">{@stats.reserved}</p>
       <p class="text-xs text-[#a0a0a0]">Reserved</p>
     </div>
+    <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-gray-400">{@stats.maintenance}</p>
+      <p class="text-xs text-[#a0a0a0]">Maintenance</p>
+    </div>
   </div>
 
   <!-- Filters -->
@@ -30,16 +56,23 @@
         </svg>
         <input type="text" name="search" value={@search} phx-debounce="300"
           class="w-full bg-[#1a1a1a] border border-[#333333] rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-[#666] focus:border-[#c8d935] focus:ring-1 focus:ring-[#c8d935] outline-none transition-colors"
-          placeholder="Search by space number or zone..." />
+          placeholder="Search by space number or section..." />
       </form>
     </div>
 
-    <form phx-change="filter_zone">
-      <select name="zone" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
-        <option value="all" selected={@zone_filter == "all"}>All Zones</option>
-        <option value="Zone A - Trucks" selected={@zone_filter == "Zone A - Trucks"}>Zone A - Trucks</option>
-        <option value="Zone B - RVs" selected={@zone_filter == "Zone B - RVs"}>Zone B - RVs</option>
-        <option value="Zone C - Cars" selected={@zone_filter == "Zone C - Cars"}>Zone C - Cars</option>
+    <form phx-change="filter_lot">
+      <select name="lot_id" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
+        <option value="all" selected={@lot_filter == "all"}>All Lots</option>
+        <option :for={lot <- @lots} value={lot.id} selected={@lot_filter == to_string(lot.id)}>{lot.name}</option>
+      </select>
+    </form>
+
+    <form phx-change="filter_vehicle">
+      <select name="vehicle_type" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
+        <option value="all" selected={@vehicle_filter == "all"}>All Types</option>
+        <option value="truck" selected={@vehicle_filter == "truck"}>Truck</option>
+        <option value="rv" selected={@vehicle_filter == "rv"}>RV</option>
+        <option value="car" selected={@vehicle_filter == "car"}>Car</option>
       </select>
     </form>
 
@@ -74,26 +107,43 @@
     </div>
   </div>
 
-  <!-- Spaces Grid by Zone -->
+  <!-- Spaces Grid by Lot -->
   <div class="space-y-8">
-    <%= for {zone, zone_spaces} <- @spaces_by_zone do %>
-      <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-white mb-4">{zone}</h2>
-        <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
-          <%= for space <- zone_spaces do %>
-            <button
-              phx-click="open_detail"
-              phx-value-id={space.id}
-              class={"flex flex-col items-center justify-center p-2 rounded-lg border transition-all hover:scale-105 cursor-pointer #{space_color(space.status)}"}
-            >
-              <span class="text-xs font-medium">{space.number}</span>
-              <span :if={space.status == "occupied" && space.customer} class="text-[10px] font-bold mt-0.5">
-                {customer_initials(space.customer)}
-              </span>
-            </button>
-          <% end %>
-        </div>
+    <%= if @spaces_by_lot == [] do %>
+      <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-12 text-center">
+        <p class="text-[#a0a0a0] text-lg mb-4">No parking spaces found</p>
+        <button
+          phx-click="open_create"
+          class="bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold px-6 py-2.5 rounded-lg transition-colors"
+        >
+          Create Your First Space
+        </button>
       </div>
+    <% else %>
+      <%= for {lot, lot_spaces} <- @spaces_by_lot do %>
+        <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <.building_icon class="h-5 w-5 text-[#c8d935]" />
+            <h2 class="text-lg font-semibold text-white">{if lot, do: lot.name, else: "Unassigned"}</h2>
+            <span class="text-sm text-[#a0a0a0]">({length(lot_spaces)} spaces)</span>
+          </div>
+          <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+            <%= for space <- lot_spaces do %>
+              <button
+                phx-click="open_detail"
+                phx-value-id={space.id}
+                class={"flex flex-col items-center justify-center p-2 rounded-lg border transition-all hover:scale-105 cursor-pointer #{space_color(space.status)}"}
+              >
+                <span class="text-xs font-medium">{space.number}</span>
+                <span class="text-[8px] uppercase opacity-70">{space.vehicle_type}</span>
+                <span :if={space.status == "occupied" && space.customer} class="text-[10px] font-bold mt-0.5">
+                  {customer_initials(space.customer)}
+                </span>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     <% end %>
   </div>
 
@@ -103,9 +153,26 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h3 class="text-xl font-bold text-white">Space {@selected_space.number}</h3>
-          <p class="text-[#a0a0a0] text-sm">{@selected_space.zone}</p>
+          <p class="text-[#a0a0a0] text-sm">
+            {if @selected_space.parking_lot, do: @selected_space.parking_lot.name, else: "Unassigned Lot"}
+            {if @selected_space.section, do: " - #{@selected_space.section}", else: ""}
+          </p>
         </div>
         <.status_badge status={@selected_space.status} />
+      </div>
+
+      <!-- Space info -->
+      <div class="bg-[#111111] rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-[#a0a0a0] text-xs mb-1">Vehicle Type</p>
+            <p class="text-white font-medium capitalize">{@selected_space.vehicle_type}</p>
+          </div>
+          <div>
+            <p class="text-[#a0a0a0] text-xs mb-1">Section</p>
+            <p class="text-white font-medium">{@selected_space.section || "None"}</p>
+          </div>
+        </div>
       </div>
 
       <!-- Customer info if occupied -->
@@ -140,6 +207,11 @@
           class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2.5 rounded-lg transition-colors">
           Set Maintenance
         </button>
+        <button :if={@selected_space.status == "available"}
+          phx-click="open_delete" phx-value-id={@selected_space.id}
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg transition-colors">
+          Delete
+        </button>
         <button :if={@selected_space.status == "maintenance"}
           phx-click="mark_available" phx-value-id={@selected_space.id}
           class="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 rounded-lg transition-colors">
@@ -147,6 +219,205 @@
         </button>
         <button phx-click="close_modal" class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors">
           Close
+        </button>
+      </div>
+    </div>
+  </.modal>
+
+  <!-- Create Space Modal -->
+  <.modal id="create-modal" show={@show_create_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6">
+      <h3 class="text-xl font-bold text-white mb-6">Create Parking Space</h3>
+      <.form for={@create_form} phx-submit="create_space" class="space-y-4">
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Parking Lot *</label>
+          <select
+            name="space[parking_lot_id]"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
+            required
+          >
+            <option value="">Select a lot</option>
+            <option :for={lot <- @lots} value={lot.id}>{lot.name}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Space Number *</label>
+          <input
+            type="text"
+            name="space[number]"
+            placeholder="e.g., A001"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            required
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Vehicle Type *</label>
+            <select
+              name="space[vehicle_type]"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
+              required
+            >
+              <option value="truck">Truck</option>
+              <option value="rv">RV</option>
+              <option value="car">Car</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Section (optional)</label>
+            <input
+              type="text"
+              name="space[section]"
+              placeholder="e.g., Section A"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            class="flex-1 bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            Create Space
+          </button>
+          <button
+            type="button"
+            phx-click="close_modal"
+            class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  </.modal>
+
+  <!-- Bulk Create Modal -->
+  <.modal id="bulk-modal" show={@show_bulk_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6">
+      <h3 class="text-xl font-bold text-white mb-6">Bulk Create Spaces</h3>
+      <.form for={@bulk_form} phx-submit="bulk_create" class="space-y-4">
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Parking Lot *</label>
+          <select
+            name="bulk[parking_lot_id]"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
+            required
+          >
+            <option value="">Select a lot</option>
+            <option :for={lot <- @lots} value={lot.id}>{lot.name}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Number Prefix *</label>
+          <input
+            type="text"
+            name="bulk[prefix]"
+            placeholder="e.g., A, B, T"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            required
+          />
+          <p class="text-xs text-[#a0a0a0] mt-1">Spaces will be created as prefix + padded number (e.g., A001, A002...)</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Start Number *</label>
+            <input
+              type="number"
+              name="bulk[start_num]"
+              value="1"
+              min="1"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">End Number *</label>
+            <input
+              type="number"
+              name="bulk[end_num]"
+              value="10"
+              min="1"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Vehicle Type *</label>
+            <select
+              name="bulk[vehicle_type]"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
+              required
+            >
+              <option value="truck">Truck</option>
+              <option value="rv">RV</option>
+              <option value="car">Car</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Section (optional)</label>
+            <input
+              type="text"
+              name="bulk[section]"
+              placeholder="e.g., Section A"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            class="flex-1 bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            Create Spaces
+          </button>
+          <button
+            type="button"
+            phx-click="close_modal"
+            class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  </.modal>
+
+  <!-- Delete Confirmation Modal -->
+  <.modal id="delete-modal" show={@show_delete_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6 text-center">
+      <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">Delete Space</h3>
+      <p class="text-[#a0a0a0] mb-6">
+        Are you sure you want to delete space
+        <span :if={@selected_space} class="text-white font-medium">{@selected_space.number}</span>?
+        This action cannot be undone.
+      </p>
+      <div class="flex gap-3">
+        <button
+          phx-click="confirm_delete"
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
+        >
+          Delete
+        </button>
+        <button
+          phx-click="close_modal"
+          class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          Cancel
         </button>
       </div>
     </div>

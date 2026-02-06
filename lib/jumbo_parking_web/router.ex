@@ -48,6 +48,7 @@ defmodule JumboParkingWeb.Router do
       on_mount: [{JumboParkingWeb.Admin.AdminAuth, :ensure_admin}] do
       live "/", DashboardLive, :index
       live "/customers", CustomersLive, :index
+      live "/lots", LotsLive, :index
       live "/spaces", SpacesLive, :index
       live "/pricing", PricingLive, :index
     end

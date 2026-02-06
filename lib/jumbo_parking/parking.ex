@@ -1,12 +1,101 @@
 defmodule JumboParking.Parking do
   @moduledoc """
-  The Parking context - all business logic for spaces, customers, bookings, pricing, and activity.
+  The Parking context - all business logic for lots, spaces, customers, bookings, pricing, and activity.
   """
 
   import Ecto.Query, warn: false
   alias JumboParking.Repo
 
-  alias JumboParking.Parking.{PricingPlan, Customer, ParkingSpace, Booking, ActivityLog}
+  alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, Booking, ActivityLog}
+
+  # ── Parking Lots ────────────────────────────────────────────
+
+  def list_lots do
+    Repo.all(from l in ParkingLot, order_by: l.name)
+  end
+
+  def list_active_lots do
+    Repo.all(from l in ParkingLot, where: l.active == true, order_by: l.name)
+  end
+
+  def get_lot!(id), do: Repo.get!(ParkingLot, id)
+
+  def get_lot(id), do: Repo.get(ParkingLot, id)
+
+  def create_lot(attrs) do
+    result =
+      %ParkingLot{}
+      |> ParkingLot.changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, lot} ->
+        log_activity("lot_created", "Parking lot created: #{lot.name}", "lot", lot.id)
+        {:ok, lot}
+
+      error ->
+        error
+    end
+  end
+
+  def update_lot(%ParkingLot{} = lot, attrs) do
+    result =
+      lot
+      |> ParkingLot.changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, lot} ->
+        log_activity("lot_updated", "Parking lot updated: #{lot.name}", "lot", lot.id)
+        {:ok, lot}
+
+      error ->
+        error
+    end
+  end
+
+  def delete_lot(%ParkingLot{} = lot) do
+    # Check if lot has spaces
+    space_count = Repo.aggregate(from(s in ParkingSpace, where: s.parking_lot_id == ^lot.id), :count, :id)
+
+    if space_count > 0 do
+      {:error, :has_spaces}
+    else
+      result = Repo.delete(lot)
+
+      case result do
+        {:ok, lot} ->
+          log_activity("lot_deleted", "Parking lot deleted: #{lot.name}", "lot", lot.id)
+          {:ok, lot}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  def change_lot(%ParkingLot{} = lot, attrs \\ %{}) do
+    ParkingLot.changeset(lot, attrs)
+  end
+
+  def lot_space_counts(lot_id) do
+    from(s in ParkingSpace, where: s.parking_lot_id == ^lot_id)
+    |> Repo.all()
+    |> Enum.reduce(%{total: 0, available: 0, occupied: 0, reserved: 0, maintenance: 0}, fn space, acc ->
+      acc
+      |> Map.update!(:total, &(&1 + 1))
+      |> Map.update!(String.to_existing_atom(space.status), &(&1 + 1))
+    end)
+  end
+
+  def all_lots_with_counts do
+    lots = list_lots()
+
+    Enum.map(lots, fn lot ->
+      counts = lot_space_counts(lot.id)
+      Map.put(lot, :space_counts, counts)
+    end)
+  end
 
   # ── Pricing Plans ─────────────────────────────────────────
 
@@ -158,48 +247,113 @@ defmodule JumboParking.Parking do
   # ── Parking Spaces ────────────────────────────────────────
 
   def list_spaces do
-    Repo.all(from s in ParkingSpace, order_by: s.number, preload: [:customer])
+    Repo.all(from s in ParkingSpace, order_by: s.number, preload: [:customer, :parking_lot])
   end
 
-  def list_spaces_by_zone do
+  def list_spaces_by_lot do
     list_spaces()
-    |> Enum.group_by(& &1.zone)
-    |> Enum.sort_by(fn {zone, _} -> zone end)
+    |> Enum.group_by(& &1.parking_lot)
+    |> Enum.sort_by(fn {lot, _} -> if lot, do: lot.name, else: "" end)
   end
 
   def get_space!(id) do
     ParkingSpace
     |> Repo.get!(id)
-    |> Repo.preload(:customer)
+    |> Repo.preload([:customer, :parking_lot])
   end
 
   def create_space(attrs) do
-    %ParkingSpace{}
-    |> ParkingSpace.changeset(attrs)
-    |> Repo.insert()
+    result =
+      %ParkingSpace{}
+      |> ParkingSpace.changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, space} ->
+        space = Repo.preload(space, [:customer, :parking_lot])
+        log_activity("space_created", "Parking space created: #{space.number}", "space", space.id)
+        {:ok, space}
+
+      error ->
+        error
+    end
   end
 
-  def get_available_spaces(zone \\ nil) do
+  def delete_space(%ParkingSpace{} = space) do
+    if space.status == "available" do
+      result = Repo.delete(space)
+
+      case result do
+        {:ok, space} ->
+          log_activity("space_deleted", "Parking space deleted: #{space.number}", "space", space.id)
+          {:ok, space}
+
+        error ->
+          error
+      end
+    else
+      {:error, :not_available}
+    end
+  end
+
+  def bulk_create_spaces(lot_id, prefix, start_num, end_num, vehicle_type, section \\ nil) do
+    results =
+      for i <- start_num..end_num do
+        number = "#{prefix}#{String.pad_leading("#{i}", 3, "0")}"
+
+        create_space(%{
+          parking_lot_id: lot_id,
+          number: number,
+          vehicle_type: vehicle_type,
+          section: section,
+          status: "available"
+        })
+      end
+
+    successes = Enum.filter(results, &match?({:ok, _}, &1))
+    errors = Enum.filter(results, &match?({:error, _}, &1))
+
+    {:ok, %{created: length(successes), errors: length(errors)}}
+  end
+
+  def get_available_spaces(vehicle_type \\ nil) do
     ParkingSpace
     |> where([s], s.status == "available")
-    |> maybe_filter_zone(zone)
+    |> maybe_filter_space_vehicle_type(vehicle_type)
     |> order_by([s], s.number)
+    |> preload([:parking_lot])
     |> Repo.all()
   end
 
-  defp maybe_filter_zone(query, nil), do: query
-  defp maybe_filter_zone(query, ""), do: query
-  defp maybe_filter_zone(query, "all"), do: query
-  defp maybe_filter_zone(query, zone), do: where(query, [s], s.zone == ^zone)
+  defp maybe_filter_space_vehicle_type(query, nil), do: query
+  defp maybe_filter_space_vehicle_type(query, ""), do: query
+  defp maybe_filter_space_vehicle_type(query, "all"), do: query
+  defp maybe_filter_space_vehicle_type(query, type), do: where(query, [s], s.vehicle_type == ^type)
 
   def filter_spaces(opts \\ %{}) do
     ParkingSpace
-    |> maybe_filter_zone(opts["zone"])
+    |> maybe_filter_lot(opts["lot_id"])
+    |> maybe_filter_space_vehicle_type(opts["vehicle_type"])
     |> maybe_filter_space_status(opts["status"])
     |> maybe_search_space(opts["search"])
     |> order_by([s], s.number)
-    |> preload(:customer)
+    |> preload([:customer, :parking_lot])
     |> Repo.all()
+  end
+
+  defp maybe_filter_lot(query, nil), do: query
+  defp maybe_filter_lot(query, ""), do: query
+  defp maybe_filter_lot(query, "all"), do: query
+
+  defp maybe_filter_lot(query, lot_id) when is_binary(lot_id) do
+    case Integer.parse(lot_id) do
+      {id, ""} -> where(query, [s], s.parking_lot_id == ^id)
+      _ -> query
+    end
+  end
+
+  defp maybe_filter_lot(query, lot_id) when is_integer(lot_id) do
+    where(query, [s], s.parking_lot_id == ^lot_id)
   end
 
   defp maybe_filter_space_status(query, nil), do: query
@@ -212,7 +366,7 @@ defmodule JumboParking.Parking do
 
   defp maybe_search_space(query, search) do
     search = "%#{search}%"
-    where(query, [s], ilike(s.number, ^search) or ilike(s.zone, ^search))
+    where(query, [s], ilike(s.number, ^search) or ilike(s.section, ^search))
   end
 
   def assign_space(%ParkingSpace{} = space, %Customer{} = customer) do
@@ -224,7 +378,7 @@ defmodule JumboParking.Parking do
     case result do
       {:ok, space} ->
         log_activity("space_assigned", "Space #{space.number} assigned to #{customer.first_name} #{customer.last_name}", "space", space.id)
-        {:ok, Repo.preload(space, :customer, force: true)}
+        {:ok, Repo.preload(space, [:customer, :parking_lot], force: true)}
 
       error ->
         error
@@ -240,7 +394,7 @@ defmodule JumboParking.Parking do
     case result do
       {:ok, space} ->
         log_activity("space_released", "Space #{space.number} released", "space", space.id)
-        {:ok, Repo.preload(space, :customer, force: true)}
+        {:ok, Repo.preload(space, [:customer, :parking_lot], force: true)}
 
       error ->
         error
@@ -256,7 +410,7 @@ defmodule JumboParking.Parking do
     case result do
       {:ok, space} ->
         log_activity("space_maintenance", "Space #{space.number} set to maintenance", "space", space.id)
-        {:ok, Repo.preload(space, :customer, force: true)}
+        {:ok, Repo.preload(space, [:customer, :parking_lot], force: true)}
 
       error ->
         error
@@ -272,7 +426,7 @@ defmodule JumboParking.Parking do
     case result do
       {:ok, space} ->
         log_activity("space_available", "Space #{space.number} marked as available", "space", space.id)
-        {:ok, Repo.preload(space, :customer, force: true)}
+        {:ok, Repo.preload(space, [:customer, :parking_lot], force: true)}
 
       error ->
         error
