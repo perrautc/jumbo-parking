@@ -2,6 +2,7 @@ defmodule JumboParkingWeb.BookingLive do
   use JumboParkingWeb, :live_view
 
   alias JumboParking.Parking
+  alias JumboParking.Payments
 
   @impl true
   def mount(_params, _session, socket) do
@@ -100,14 +101,25 @@ defmodule JumboParkingWeb.BookingLive do
         }
 
         case Parking.create_booking(booking_attrs) do
-          {:ok, _booking} ->
-            socket =
-              socket
-              |> assign(:submitting, false)
-              |> put_flash(:info, "Booking submitted successfully! We'll contact you shortly.")
-              |> push_navigate(to: ~p"/")
+          {:ok, booking} ->
+            booking = Parking.preload_booking(booking, :customer)
+            base_url = JumboParkingWeb.Endpoint.url()
+            success_url = "#{base_url}/booking/success?session_id={CHECKOUT_SESSION_ID}"
+            cancel_url = "#{base_url}/booking/cancel?booking_id=#{booking.id}"
 
-            {:noreply, socket}
+            case Payments.create_checkout_session(booking, success_url, cancel_url) do
+              {:ok, session} ->
+                Parking.update_booking(booking, %{stripe_session_id: session.id})
+                {:noreply, redirect(socket, external: session.url)}
+
+              {:error, _stripe_error} ->
+                socket =
+                  socket
+                  |> assign(:submitting, false)
+                  |> put_flash(:error, "Payment setup failed. Please try again.")
+
+                {:noreply, socket}
+            end
 
           {:error, _changeset} ->
             socket =

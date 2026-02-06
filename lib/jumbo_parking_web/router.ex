@@ -25,6 +25,14 @@ defmodule JumboParkingWeb.Router do
     live "/booking", BookingLive, :index
   end
 
+  # Stripe payment callbacks
+  scope "/booking", JumboParkingWeb do
+    pipe_through :browser
+
+    get "/success", StripeController, :success
+    get "/cancel", StripeController, :cancel
+  end
+
   # Admin login (guest only)
   scope "/admin", JumboParkingWeb.Admin do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
