@@ -169,6 +169,12 @@ defmodule JumboParkingWeb.BookingLive do
   defp plan_label("yearly"), do: "Yearly"
   defp plan_label(_), do: ""
 
+  defp period_suffix("daily"), do: "per day"
+  defp period_suffix("weekly"), do: "per week"
+  defp period_suffix("monthly"), do: "per month"
+  defp period_suffix("yearly"), do: "per year"
+  defp period_suffix(_), do: ""
+
   defp vehicle_label("truck"), do: "Truck & Trailer"
   defp vehicle_label("rv"), do: "RV"
   defp vehicle_label("car"), do: "Car or SUV"
