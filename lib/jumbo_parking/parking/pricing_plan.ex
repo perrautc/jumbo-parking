@@ -6,7 +6,7 @@ defmodule JumboParking.Parking.PricingPlan do
     field :vehicle_type, :string
     field :vehicle_name, :string
     field :description, :string
-    field :icon, :string, default: "default"
+    field :icon, :string, default: "truck"
     field :price_daily, :integer
     field :price_weekly, :integer
     field :price_monthly, :integer
