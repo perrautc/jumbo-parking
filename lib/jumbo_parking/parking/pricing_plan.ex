@@ -17,7 +17,7 @@ defmodule JumboParking.Parking.PricingPlan do
     timestamps(type: :utc_datetime)
   end
 
-  @icons ~w(truck truck-emoji rv rv-emoji car car-emoji warehouse forklift container trailer)
+  @icons ~w(truck truck-emoji rv rv-emoji car car-emoji warehouse forklift container trailer boat boat-emoji box-truck box-truck-emoji)
 
   def changeset(plan, attrs) do
     plan
