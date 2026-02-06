@@ -6,7 +6,7 @@ defmodule JumboParking.Parking do
   import Ecto.Query, warn: false
   alias JumboParking.Repo
 
-  alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, Booking, ActivityLog, VehicleType}
+  alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, Booking, ActivityLog, VehicleType, MerchItem, SiteSetting}
 
   # ── Parking Lots ────────────────────────────────────────────
 
@@ -659,5 +659,101 @@ defmodule JumboParking.Parking do
       entity_id: entity_id
     })
     |> Repo.insert()
+  end
+
+  # ── Site Settings ──────────────────────────────────────────
+
+  def get_setting(key) do
+    case Repo.get_by(SiteSetting, key: key) do
+      nil -> SiteSetting.default_value(key)
+      setting -> setting.value
+    end
+  end
+
+  def get_setting_bool(key) do
+    get_setting(key) == "true"
+  end
+
+  def set_setting(key, value) do
+    case Repo.get_by(SiteSetting, key: key) do
+      nil ->
+        %SiteSetting{}
+        |> SiteSetting.changeset(%{key: key, value: value})
+        |> Repo.insert()
+
+      setting ->
+        setting
+        |> SiteSetting.changeset(%{value: value})
+        |> Repo.update()
+    end
+  end
+
+  def list_settings do
+    Repo.all(SiteSetting)
+  end
+
+  # ── Merch Items ────────────────────────────────────────────
+
+  def list_merch_items do
+    Repo.all(from m in MerchItem, order_by: m.sort_order)
+  end
+
+  def list_active_merch_items do
+    Repo.all(from m in MerchItem, where: m.active == true, order_by: m.sort_order)
+  end
+
+  def get_merch_item!(id), do: Repo.get!(MerchItem, id)
+
+  def create_merch_item(attrs) do
+    result =
+      %MerchItem{}
+      |> MerchItem.changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, item} ->
+        log_activity("merch_created", "Merch item created: #{item.name}", "merch", item.id)
+        {:ok, item}
+
+      error ->
+        error
+    end
+  end
+
+  def update_merch_item(%MerchItem{} = item, attrs) do
+    result =
+      item
+      |> MerchItem.changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, item} ->
+        log_activity("merch_updated", "Merch item updated: #{item.name}", "merch", item.id)
+        {:ok, item}
+
+      error ->
+        error
+    end
+  end
+
+  def delete_merch_item(%MerchItem{} = item) do
+    result = Repo.delete(item)
+
+    case result do
+      {:ok, item} ->
+        log_activity("merch_deleted", "Merch item deleted: #{item.name}", "merch", item.id)
+        {:ok, item}
+
+      error ->
+        error
+    end
+  end
+
+  def change_merch_item(%MerchItem{} = item, attrs \\ %{}) do
+    MerchItem.changeset(item, attrs)
+  end
+
+  def toggle_merch_item_active(%MerchItem{} = item) do
+    update_merch_item(item, %{active: !item.active})
   end
 end

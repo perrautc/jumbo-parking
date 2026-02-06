@@ -18,6 +18,8 @@
       <.admin_nav_link href="/admin/spaces" icon="squares-2x2" label="Parking Spaces" active={@active_tab == :spaces} />
       <.admin_nav_link href="/admin/pricing" icon="currency-dollar" label="Pricing" active={@active_tab == :pricing} />
       <.admin_nav_link href="/admin/vehicle-types" icon="truck" label="Vehicle Types" active={@active_tab == :vehicle_types} />
+      <.admin_nav_link href="/admin/merch" icon="shopping-bag" label="Merch Store" active={@active_tab == :merch} />
+      <.admin_nav_link href="/admin/orders" icon="clipboard-list" label="Orders" active={@active_tab == :orders} />
       <%= if @current_scope && @current_scope.user && JumboParking.Accounts.Role.can_manage_team?(@current_scope.user.role) do %>
         <.admin_nav_link href="/admin/team" icon="user-group" label="Team" active={@active_tab == :team} />
       <% end %>
@@ -72,6 +74,8 @@
         <.admin_nav_link href="/admin/spaces" icon="squares-2x2" label="Parking Spaces" active={@active_tab == :spaces} />
         <.admin_nav_link href="/admin/pricing" icon="currency-dollar" label="Pricing" active={@active_tab == :pricing} />
         <.admin_nav_link href="/admin/vehicle-types" icon="truck" label="Vehicle Types" active={@active_tab == :vehicle_types} />
+        <.admin_nav_link href="/admin/merch" icon="shopping-bag" label="Merch Store" active={@active_tab == :merch} />
+        <.admin_nav_link href="/admin/orders" icon="clipboard-list" label="Orders" active={@active_tab == :orders} />
         <%= if @current_scope && @current_scope.user && JumboParking.Accounts.Role.can_manage_team?(@current_scope.user.role) do %>
           <.admin_nav_link href="/admin/team" icon="user-group" label="Team" active={@active_tab == :team} />
         <% end %>

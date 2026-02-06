@@ -2,6 +2,7 @@ defmodule JumboParkingWeb.Router do
   use JumboParkingWeb, :router
 
   import JumboParkingWeb.UserAuth
+  alias JumboParkingWeb.Plugs.CartSession
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -15,6 +16,10 @@ defmodule JumboParkingWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  pipeline :cart_session do
+    plug CartSession
   end
 
   # Public pages
@@ -31,6 +36,32 @@ defmodule JumboParkingWeb.Router do
 
     get "/success", StripeController, :success
     get "/cancel", StripeController, :cancel
+  end
+
+  # Public store routes
+  scope "/store", JumboParkingWeb.Store do
+    pipe_through [:browser, :cart_session]
+
+    live "/", StoreLive, :index
+    live "/product/:id", ProductLive, :show
+    live "/cart", CartLive, :index
+    live "/checkout", CheckoutLive, :index
+    live "/order/:order_number", OrderConfirmationLive, :show
+  end
+
+  # Store checkout callbacks (no cart session needed)
+  scope "/store", JumboParkingWeb do
+    pipe_through :browser
+
+    get "/checkout/success", StoreController, :success
+    get "/checkout/cancel", StoreController, :cancel
+  end
+
+  # Webhooks
+  scope "/webhooks", JumboParkingWeb do
+    pipe_through :api
+
+    post "/printful", PrintfulWebhookController, :handle
   end
 
   # Admin login (guest only)
@@ -69,6 +100,8 @@ defmodule JumboParkingWeb.Router do
       live "/spaces", SpacesLive, :index
       live "/pricing", PricingLive, :index
       live "/vehicle-types", VehicleTypesLive, :index
+      live "/merch", MerchLive, :index
+      live "/orders", OrdersLive, :index
     end
   end
 

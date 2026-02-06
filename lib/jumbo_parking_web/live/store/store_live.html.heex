@@ -1,0 +1,99 @@
+<div class="min-h-screen bg-black">
+  <!-- Header -->
+  <header class="bg-[#111] border-b border-[#333]">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src={~p"/images/logo.png"} alt="Jumbo Parking" class="w-10 h-10 object-contain" />
+          <div>
+            <span class="text-lg font-bold text-white">Jumbo Parking</span>
+            <span class="text-[#c8d935] text-xs block -mt-1">Store</span>
+          </div>
+        </a>
+
+        <div class="flex items-center gap-6">
+          <.link navigate={~p"/"} class="text-white/70 hover:text-[#c8d935] transition-colors">
+            Home
+          </.link>
+          <.link navigate={~p"/store/cart"} class="relative flex items-center gap-2 text-white hover:text-[#c8d935] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span class="hidden sm:inline">Cart</span>
+            <%= if @cart && Store.cart_item_count(@cart) > 0 do %>
+              <span class="absolute -top-2 -right-2 bg-[#c8d935] text-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {Store.cart_item_count(@cart)}
+              </span>
+            <% end %>
+          </.link>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl lg:text-5xl font-bold text-white mb-4">Official Merchandise</h1>
+      <p class="text-white/60 max-w-2xl mx-auto">Show your love for Jumbo Parking and Storage with our official merchandise. Quality gear for our community.</p>
+    </div>
+
+    <%= if @merch_enabled && length(@products) > 0 do %>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div :for={product <- @products} class="group bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-hidden hover:border-[#c8d935]/50 transition-all duration-300">
+          <!-- Product Image -->
+          <.link navigate={~p"/store/product/#{product.id}"} class="block">
+            <div class="relative aspect-square overflow-hidden bg-[#111]">
+              <%= if product.image_url && product.image_url != "" do %>
+                <img src={product.image_url} alt={product.name} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <% else %>
+                <div class="w-full h-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+              <% end %>
+              <div :if={product.badge && product.badge != ""} class="absolute top-4 left-4">
+                <span class="bg-[#c8d935] text-black px-3 py-1 rounded-full text-sm font-bold capitalize">{product.badge}</span>
+              </div>
+            </div>
+          </.link>
+
+          <!-- Product Info -->
+          <div class="p-6">
+            <.link navigate={~p"/store/product/#{product.id}"}>
+              <h3 class="text-lg font-bold text-white group-hover:text-[#c8d935] transition-colors mb-2">{product.name}</h3>
+            </.link>
+            <p class="text-white/60 text-sm mb-4 line-clamp-2">{product.description || "Quality merchandise"}</p>
+
+            <div class="flex items-center justify-between">
+              <span class="text-[#c8d935] font-bold text-xl">{format_price(product.price)}</span>
+
+              <%= if length(product.variants) > 0 do %>
+                <.link navigate={~p"/store/product/#{product.id}"} class="bg-[#c8d935] hover:bg-[#d4e54a] text-black font-semibold px-4 py-2 rounded-lg transition-colors">
+                  View Options
+                </.link>
+              <% else %>
+                <span class="text-white/40 text-sm">Coming Soon</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-20">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto text-[#333] mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        <h2 class="text-2xl font-bold text-white mb-4">Store Coming Soon</h2>
+        <p class="text-white/60">We're setting up our merchandise store. Check back soon!</p>
+      </div>
+    <% end %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-[#111] border-t border-[#333] py-8 mt-12">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <p class="text-white/40">&copy; 2026 Jumbo Parking and Storage. All rights reserved.</p>
+    </div>
+  </footer>
+</div>

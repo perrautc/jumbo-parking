@@ -59,4 +59,58 @@ defmodule JumboParking.Payments do
       _ -> {:error, :unknown}
     end
   end
+
+  @doc """
+  Creates a Stripe Checkout session for a store order.
+  """
+  def create_order_checkout_session(order, success_url, cancel_url) do
+    order = JumboParking.Repo.preload(order, :items)
+
+    line_items =
+      Enum.map(order.items, fn item ->
+        %{
+          price_data: %{
+            currency: "usd",
+            unit_amount: item.unit_price,
+            product_data: %{
+              name: item.product_name,
+              description: item.variant_name || "Default"
+            }
+          },
+          quantity: item.quantity
+        }
+      end)
+
+    # Add shipping as a line item if applicable
+    line_items =
+      if order.shipping_cost && order.shipping_cost > 0 do
+        line_items ++
+          [
+            %{
+              price_data: %{
+                currency: "usd",
+                unit_amount: order.shipping_cost,
+                product_data: %{
+                  name: "Shipping"
+                }
+              },
+              quantity: 1
+            }
+          ]
+      else
+        line_items
+      end
+
+    StripeClient.create_checkout_session(%{
+      mode: "payment",
+      line_items: line_items,
+      customer_email: order.email,
+      metadata: %{order_id: order.id, order_number: order.order_number},
+      success_url: success_url,
+      cancel_url: cancel_url,
+      shipping_address_collection: %{
+        allowed_countries: ["US"]
+      }
+    })
+  end
 end
