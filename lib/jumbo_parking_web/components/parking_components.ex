@@ -326,6 +326,18 @@ defmodule JumboParkingWeb.ParkingComponents do
         <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM3 17h1m16 0h1M3 17V7a2 2 0 012-2h14a2 2 0 012 2v10M5 12h14" />
         </svg>
+      <% "boat" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v4m0 0l4 2m-4-2L8 9m4 0v6m-8 2c1.5 1 3 1.5 4 1.5s2.5-.5 4-1.5c1.5 1 3 1.5 4 1.5s2.5-.5 4-1.5M4 17l2-8h12l2 8" />
+        </svg>
+      <% "boat-emoji" -> %>
+        <span class={@class} style="font-size: inherit; line-height: 1;">&#x26F5;</span>
+      <% "box-truck" -> %>
+        <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM20 17a2 2 0 11-4 0 2 2 0 014 0zM6 17H4V7a1 1 0 011-1h10a1 1 0 011 1v2m0 0h3l2 3v5h-1M16 9V6M6 12h10" />
+        </svg>
+      <% "box-truck-emoji" -> %>
+        <span class={@class} style="font-size: inherit; line-height: 1;">&#x1F69A;</span>
       <% _ -> %>
         <svg xmlns="http://www.w3.org/2000/svg" class={@class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -348,7 +360,11 @@ defmodule JumboParkingWeb.ParkingComponents do
       {"warehouse", "Warehouse"},
       {"forklift", "Forklift"},
       {"container", "Container"},
-      {"trailer", "Trailer"}
+      {"trailer", "Trailer"},
+      {"boat", "Boat (SVG)"},
+      {"boat-emoji", "Boat (Emoji)"},
+      {"box-truck", "Box Truck (SVG)"},
+      {"box-truck-emoji", "Box Truck (Emoji)"}
     ]
   end
 end
