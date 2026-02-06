@@ -70,9 +70,9 @@
     <form phx-change="filter_vehicle">
       <select name="vehicle_type" class="bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer">
         <option value="all" selected={@vehicle_filter == "all"}>All Types</option>
-        <option value="truck" selected={@vehicle_filter == "truck"}>Truck</option>
-        <option value="rv" selected={@vehicle_filter == "rv"}>RV</option>
-        <option value="car" selected={@vehicle_filter == "car"}>Car</option>
+        <%= for {name, slug} <- @vehicle_types do %>
+          <option value={slug} selected={@vehicle_filter == slug}>{name}</option>
+        <% end %>
       </select>
     </form>
 
@@ -260,9 +260,9 @@
               class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
               required
             >
-              <option value="truck">Truck</option>
-              <option value="rv">RV</option>
-              <option value="car">Car</option>
+              <%= for {name, slug} <- @vehicle_types do %>
+                <option value={slug}>{name}</option>
+              <% end %>
             </select>
           </div>
           <div>
@@ -357,9 +357,9 @@
               class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none cursor-pointer"
               required
             >
-              <option value="truck">Truck</option>
-              <option value="rv">RV</option>
-              <option value="car">Car</option>
+              <%= for {name, slug} <- @vehicle_types do %>
+                <option value={slug}>{name}</option>
+              <% end %>
             </select>
           </div>
           <div>

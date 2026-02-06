@@ -6,7 +6,7 @@ defmodule JumboParking.Parking do
   import Ecto.Query, warn: false
   alias JumboParking.Repo
 
-  alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, Booking, ActivityLog}
+  alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, Booking, ActivityLog, VehicleType}
 
   # ── Parking Lots ────────────────────────────────────────────
 
@@ -95,6 +95,92 @@ defmodule JumboParking.Parking do
       counts = lot_space_counts(lot.id)
       Map.put(lot, :space_counts, counts)
     end)
+  end
+
+  # ── Vehicle Types ─────────────────────────────────────────
+
+  def list_vehicle_types do
+    Repo.all(from vt in VehicleType, order_by: vt.sort_order)
+  end
+
+  def list_active_vehicle_types do
+    Repo.all(from vt in VehicleType, where: vt.active == true, order_by: vt.sort_order)
+  end
+
+  def get_vehicle_type!(id), do: Repo.get!(VehicleType, id)
+
+  def get_vehicle_type(id), do: Repo.get(VehicleType, id)
+
+  def get_vehicle_type_by_slug(slug) do
+    Repo.get_by(VehicleType, slug: slug)
+  end
+
+  def create_vehicle_type(attrs) do
+    result =
+      %VehicleType{}
+      |> VehicleType.changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, vehicle_type} ->
+        log_activity("vehicle_type_created", "Vehicle type created: #{vehicle_type.name}", "vehicle_type", vehicle_type.id)
+        {:ok, vehicle_type}
+
+      error ->
+        error
+    end
+  end
+
+  def update_vehicle_type(%VehicleType{} = vehicle_type, attrs) do
+    result =
+      vehicle_type
+      |> VehicleType.changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, vehicle_type} ->
+        log_activity("vehicle_type_updated", "Vehicle type updated: #{vehicle_type.name}", "vehicle_type", vehicle_type.id)
+        {:ok, vehicle_type}
+
+      error ->
+        error
+    end
+  end
+
+  def delete_vehicle_type(%VehicleType{} = vehicle_type) do
+    # Check if vehicle type is in use
+    pricing_count = Repo.aggregate(from(p in PricingPlan, where: p.vehicle_type == ^vehicle_type.slug), :count, :id)
+    customer_count = Repo.aggregate(from(c in Customer, where: c.vehicle_type == ^vehicle_type.slug), :count, :id)
+    space_count = Repo.aggregate(from(s in ParkingSpace, where: s.vehicle_type == ^vehicle_type.slug), :count, :id)
+
+    if pricing_count > 0 or customer_count > 0 or space_count > 0 do
+      {:error, :in_use}
+    else
+      result = Repo.delete(vehicle_type)
+
+      case result do
+        {:ok, vehicle_type} ->
+          log_activity("vehicle_type_deleted", "Vehicle type deleted: #{vehicle_type.name}", "vehicle_type", vehicle_type.id)
+          {:ok, vehicle_type}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  def change_vehicle_type(%VehicleType{} = vehicle_type, attrs \\ %{}) do
+    VehicleType.changeset(vehicle_type, attrs)
+  end
+
+  def vehicle_type_options do
+    list_active_vehicle_types()
+    |> Enum.map(fn vt -> {vt.name, vt.slug} end)
+  end
+
+  def vehicle_type_slug_options do
+    list_active_vehicle_types()
+    |> Enum.map(fn vt -> vt.slug end)
   end
 
   # ── Pricing Plans ─────────────────────────────────────────

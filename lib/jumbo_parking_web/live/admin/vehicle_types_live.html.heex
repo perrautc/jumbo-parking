@@ -1,0 +1,263 @@
+<div>
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Vehicle Types</h1>
+      <p class="text-[#a0a0a0] text-sm mt-1">Manage vehicle categories and their dimensions for space planning</p>
+    </div>
+    <button phx-click="new" class="bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Vehicle Type
+    </button>
+  </div>
+
+  <!-- Vehicle Types Grid -->
+  <%= if Enum.empty?(@vehicle_types) do %>
+    <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-12 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-[#666] mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17a2 2 0 002-2H4a2 2 0 002 2m2 0a2 2 0 104 0m-6 0H4m12 0a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2-3H7L5 7H2a2 2 0 00-2 2v6a2 2 0 002 2m14 0a2 2 0 104 0m-4 0h4" />
+      </svg>
+      <h3 class="text-xl font-semibold text-white mb-2">No vehicle types</h3>
+      <p class="text-[#a0a0a0] mb-6">Get started by adding your first vehicle type.</p>
+      <button phx-click="new" class="bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium px-6 py-2.5 rounded-lg transition-colors">
+        Add First Vehicle Type
+      </button>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <%= for vt <- @vehicle_types do %>
+        <div class={"bg-[#1a1a1a] border rounded-xl p-6 transition-colors #{if vt.active, do: "border-[#333333] hover:border-[#c8d935]/50", else: "border-red-500/30 opacity-60"}"}>
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="text-[#c8d935] bg-[#c8d935]/10 p-2 rounded-lg">
+                <.pricing_icon icon={vt.icon || "truck"} class="h-8 w-8" />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-white">{vt.name}</h3>
+                <p class="text-xs text-[#666] font-mono">{vt.slug}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span :if={!vt.active} class="px-2 py-1 text-xs font-medium rounded bg-red-500/20 text-red-400">
+                Inactive
+              </span>
+              <span class="px-2 py-1 text-xs font-medium rounded bg-[#c8d935]/20 text-[#c8d935]">
+                #{vt.sort_order}
+              </span>
+            </div>
+          </div>
+
+          <p :if={vt.description} class="text-sm text-[#a0a0a0] mb-4">{vt.description}</p>
+
+          <!-- Dimensions Section -->
+          <div class="bg-[#111] rounded-lg p-4 mb-4">
+            <h4 class="text-xs font-medium text-[#666] uppercase tracking-wide mb-3">Typical Dimensions</h4>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p class="text-white font-semibold">{format_dimension(vt.length_ft)}</p>
+                <p class="text-[10px] text-[#666] uppercase">Length</p>
+              </div>
+              <div>
+                <p class="text-white font-semibold">{format_dimension(vt.width_ft)}</p>
+                <p class="text-[10px] text-[#666] uppercase">Width</p>
+              </div>
+              <div>
+                <p class="text-white font-semibold">{format_dimension(vt.height_ft)}</p>
+                <p class="text-[10px] text-[#666] uppercase">Height</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimension Range Section -->
+          <div class="bg-[#111] rounded-lg p-4 mb-4">
+            <h4 class="text-xs font-medium text-[#666] uppercase tracking-wide mb-3">Acceptable Range</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <p class="text-sm text-white">{format_dimension_range(vt.min_length_ft, vt.max_length_ft)}</p>
+                <p class="text-[10px] text-[#666] uppercase">Length Range</p>
+              </div>
+              <div>
+                <p class="text-sm text-white">{format_dimension_range(vt.min_width_ft, vt.max_width_ft)}</p>
+                <p class="text-[10px] text-[#666] uppercase">Width Range</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button phx-click="edit" phx-value-id={vt.id} class="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-2 rounded-lg transition-colors">
+              Edit
+            </button>
+            <button phx-click="toggle_active" phx-value-id={vt.id} class={"px-4 py-2 rounded-lg transition-colors #{if vt.active, do: "text-yellow-400 hover:bg-yellow-400/10", else: "text-green-400 hover:bg-green-400/10"}"}>
+              <%= if vt.active do %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              <% else %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              <% end %>
+            </button>
+            <button phx-click="delete" phx-value-id={vt.id} data-confirm="Are you sure you want to delete this vehicle type?" class="px-4 py-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Add/Edit Modal -->
+  <.modal id="vehicle-type-modal" show={@show_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6">
+      <h3 class="text-xl font-bold text-white mb-6">
+        {if @editing_vehicle_type, do: "Edit Vehicle Type", else: "New Vehicle Type"}
+      </h3>
+
+      <.form :let={f} for={@form} phx-change="validate" phx-submit="save" class="space-y-6">
+        <!-- Basic Info -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Name *</label>
+            <input type="text" name="vehicle_type[name]" value={f[:name].value}
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+              placeholder="e.g. Truck & Trailer" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Slug *</label>
+            <input type="text" name="vehicle_type[slug]" value={f[:slug].value}
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none font-mono"
+              placeholder="e.g. truck" />
+            <p class="text-xs text-[#666] mt-1">Lowercase letters, numbers, hyphens only</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Description</label>
+          <input type="text" name="vehicle_type[description]" value={f[:description].value}
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            placeholder="e.g. Semi-trucks, box trucks, and trailers" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-[#a0a0a0] mb-1">Sort Order</label>
+            <input type="number" name="vehicle_type[sort_order]" value={f[:sort_order].value}
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+              placeholder="0" />
+          </div>
+          <div class="flex items-end pb-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="vehicle_type[active]" value="true" checked={f[:active].value != false}
+                class="w-5 h-5 rounded border-[#333333] bg-[#111111] text-[#c8d935] focus:ring-[#c8d935]" />
+              <span class="text-white">Active</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Icon Selection -->
+        <div>
+          <label class="block text-sm font-medium text-[#a0a0a0] mb-2">Icon</label>
+          <div class="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto">
+            <%= for {icon_id, icon_label} <- pricing_icon_options() do %>
+              <label class={"flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all #{if f[:icon].value == icon_id, do: "border-[#c8d935] bg-[#c8d935]/10", else: "border-[#333333] hover:border-[#c8d935]/30"}"}>
+                <input type="radio" name="vehicle_type[icon]" value={icon_id} checked={f[:icon].value == icon_id} class="sr-only" />
+                <span class="text-[#c8d935]">
+                  <.pricing_icon icon={icon_id} class="h-6 w-6" />
+                </span>
+                <span class="text-[10px] text-[#a0a0a0] text-center">{icon_label}</span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Typical Dimensions -->
+        <div>
+          <h4 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#c8d935]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+            Typical Dimensions (feet)
+          </h4>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs text-[#666] mb-1">Length</label>
+              <input type="number" step="0.1" name="vehicle_type[length_ft]" value={f[:length_ft].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="75.0" />
+            </div>
+            <div>
+              <label class="block text-xs text-[#666] mb-1">Width</label>
+              <input type="number" step="0.1" name="vehicle_type[width_ft]" value={f[:width_ft].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="8.5" />
+            </div>
+            <div>
+              <label class="block text-xs text-[#666] mb-1">Height</label>
+              <input type="number" step="0.1" name="vehicle_type[height_ft]" value={f[:height_ft].value}
+                class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+                placeholder="13.5" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Acceptable Range -->
+        <div>
+          <h4 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#c8d935]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Acceptable Range (feet)
+          </h4>
+          <p class="text-xs text-[#666] mb-3">Define min/max dimensions for matching vehicles to parking spaces</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-3">
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <label class="block text-xs text-[#666] mb-1">Min Length</label>
+                  <input type="number" step="0.1" name="vehicle_type[min_length_ft]" value={f[:min_length_ft].value}
+                    class="w-full bg-[#111111] border border-[#333333] rounded-lg px-3 py-2 text-white focus:border-[#c8d935] outline-none text-sm"
+                    placeholder="40.0" />
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs text-[#666] mb-1">Max Length</label>
+                  <input type="number" step="0.1" name="vehicle_type[max_length_ft]" value={f[:max_length_ft].value}
+                    class="w-full bg-[#111111] border border-[#333333] rounded-lg px-3 py-2 text-white focus:border-[#c8d935] outline-none text-sm"
+                    placeholder="80.0" />
+                </div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <label class="block text-xs text-[#666] mb-1">Min Width</label>
+                  <input type="number" step="0.1" name="vehicle_type[min_width_ft]" value={f[:min_width_ft].value}
+                    class="w-full bg-[#111111] border border-[#333333] rounded-lg px-3 py-2 text-white focus:border-[#c8d935] outline-none text-sm"
+                    placeholder="8.0" />
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs text-[#666] mb-1">Max Width</label>
+                  <input type="number" step="0.1" name="vehicle_type[max_width_ft]" value={f[:max_width_ft].value}
+                    class="w-full bg-[#111111] border border-[#333333] rounded-lg px-3 py-2 text-white focus:border-[#c8d935] outline-none text-sm"
+                    placeholder="10.0" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="submit" class="flex-1 bg-[#c8d935] hover:bg-[#d4e54a] text-black font-medium py-2.5 rounded-lg transition-colors">
+            {if @editing_vehicle_type, do: "Update Vehicle Type", else: "Create Vehicle Type"}
+          </button>
+          <button type="button" phx-click="close_modal" class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors">
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  </.modal>
+</div>

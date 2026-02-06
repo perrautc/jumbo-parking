@@ -6,12 +6,14 @@ defmodule JumboParkingWeb.Admin.CustomersLive do
   @impl true
   def mount(_params, _session, socket) do
     customers = Parking.list_customers()
+    vehicle_types = Parking.vehicle_type_options()
 
     socket =
       socket
       |> assign(:page_title, "Customers")
       |> assign(:active_tab, :customers)
       |> assign(:customers, customers)
+      |> assign(:vehicle_types, vehicle_types)
       |> assign(:search, "")
       |> assign(:status_filter, "all")
       |> assign(:vehicle_filter, "all")
