@@ -17,6 +17,9 @@
       <.admin_nav_link href="/admin/lots" icon="building" label="Parking Lots" active={@active_tab == :lots} />
       <.admin_nav_link href="/admin/spaces" icon="squares-2x2" label="Parking Spaces" active={@active_tab == :spaces} />
       <.admin_nav_link href="/admin/pricing" icon="currency-dollar" label="Pricing" active={@active_tab == :pricing} />
+      <%= if @current_scope && @current_scope.user && JumboParking.Accounts.Role.can_manage_team?(@current_scope.user.role) do %>
+        <.admin_nav_link href="/admin/team" icon="user-group" label="Team" active={@active_tab == :team} />
+      <% end %>
     </nav>
 
     <div class="p-4 border-t border-[#333333]">
@@ -67,6 +70,9 @@
         <.admin_nav_link href="/admin/lots" icon="building" label="Parking Lots" active={@active_tab == :lots} />
         <.admin_nav_link href="/admin/spaces" icon="squares-2x2" label="Parking Spaces" active={@active_tab == :spaces} />
         <.admin_nav_link href="/admin/pricing" icon="currency-dollar" label="Pricing" active={@active_tab == :pricing} />
+        <%= if @current_scope && @current_scope.user && JumboParking.Accounts.Role.can_manage_team?(@current_scope.user.role) do %>
+          <.admin_nav_link href="/admin/team" icon="user-group" label="Team" active={@active_tab == :team} />
+        <% end %>
       </nav>
     </div>
   </div>

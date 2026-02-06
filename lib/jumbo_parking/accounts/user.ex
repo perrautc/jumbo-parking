@@ -2,6 +2,8 @@ defmodule JumboParking.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias JumboParking.Accounts.Role
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -40,10 +42,16 @@ defmodule JumboParking.Accounts.User do
       |> validate_length(:email, max: 160)
 
     if Keyword.get(opts, :validate_unique, true) do
-      changeset
-      |> unsafe_validate_unique(:email, JumboParking.Repo)
-      |> unique_constraint(:email)
-      |> validate_email_changed()
+      changeset =
+        changeset
+        |> unsafe_validate_unique(:email, JumboParking.Repo)
+        |> unique_constraint(:email)
+
+      if Keyword.get(opts, :skip_email_changed, false) do
+        changeset
+      else
+        validate_email_changed(changeset)
+      end
     else
       changeset
     end
@@ -113,6 +121,62 @@ defmodule JumboParking.Accounts.User do
   def confirm_changeset(user) do
     now = DateTime.utc_now(:second)
     change(user, confirmed_at: now)
+  end
+
+  @doc """
+  A changeset for creating a team member with email, password, and role.
+  Auto-confirms the account since they're being created by an admin.
+  """
+  def team_member_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password, :role])
+    |> validate_required([:email, :password, :role])
+    |> validate_email(Keyword.put(opts, :skip_email_changed, true))
+    |> validate_role()
+    |> validate_password(opts)
+    |> put_confirmed_at()
+  end
+
+  @doc """
+  A changeset for updating a team member's email and role only (no password).
+  """
+  def update_team_member_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :role])
+    |> validate_required([:email, :role])
+    |> validate_email_update(opts)
+    |> validate_role()
+  end
+
+  defp validate_email_update(changeset, opts) do
+    changeset =
+      changeset
+      |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
+        message: "must have the @ sign and no spaces"
+      )
+      |> validate_length(:email, max: 160)
+
+    if Keyword.get(opts, :validate_unique, true) do
+      changeset
+      |> unsafe_validate_unique(:email, JumboParking.Repo)
+      |> unique_constraint(:email)
+    else
+      changeset
+    end
+  end
+
+  defp validate_role(changeset) do
+    validate_inclusion(changeset, :role, Role.all_roles(),
+      message: "must be a valid role"
+    )
+  end
+
+  defp put_confirmed_at(changeset) do
+    if changeset.valid? do
+      put_change(changeset, :confirmed_at, DateTime.utc_now(:second))
+    else
+      changeset
+    end
   end
 
   @doc """
