@@ -26,9 +26,14 @@
       <%= for plan <- @plans do %>
         <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-6 hover:border-[#c8d935]/50 transition-colors">
           <div class="flex items-start justify-between mb-4">
-            <div>
-              <h3 class="text-lg font-semibold text-white">{plan.vehicle_name}</h3>
-              <p class="text-sm text-[#a0a0a0]">{plan.description}</p>
+            <div class="flex items-center gap-3">
+              <div class="text-[#c8d935] text-2xl">
+                <.pricing_icon icon={plan.icon || "default"} class="h-8 w-8" />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-white">{plan.vehicle_name}</h3>
+                <p class="text-sm text-[#a0a0a0]">{plan.description}</p>
+              </div>
             </div>
             <span class="px-2 py-1 text-xs font-medium rounded bg-[#c8d935]/20 text-[#c8d935] uppercase">
               {plan.vehicle_type}
@@ -101,6 +106,21 @@
           <input type="text" name="pricing_plan[description]" value={f[:description].value}
             class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
             placeholder="e.g. Semi-trucks, box trucks, and trailers" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[#a0a0a0] mb-2">Icon</label>
+          <div class="grid grid-cols-5 gap-2">
+            <%= for {icon_id, icon_label} <- pricing_icon_options() do %>
+              <label class={"flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all #{if f[:icon].value == icon_id, do: "border-[#c8d935] bg-[#c8d935]/10", else: "border-[#333333] hover:border-[#c8d935]/30"}"}>
+                <input type="radio" name="pricing_plan[icon]" value={icon_id} checked={f[:icon].value == icon_id} class="sr-only" />
+                <span class="text-[#c8d935]">
+                  <.pricing_icon icon={icon_id} class="h-6 w-6" />
+                </span>
+                <span class="text-[10px] text-[#a0a0a0] text-center">{icon_label}</span>
+              </label>
+            <% end %>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
