@@ -10,7 +10,7 @@ A modern parking and storage management system built with Phoenix LiveView. Mana
 
 ### Public Website
 - Dynamic pricing display for different vehicle types (trucks, RVs, cars)
-- Online booking request form
+- Online booking with Stripe Checkout payment integration
 - Responsive design with dark theme
 
 ### Admin Dashboard (`/admin`)
@@ -25,6 +25,7 @@ A modern parking and storage management system built with Phoenix LiveView. Mana
 - **Phoenix LiveView** - Real-time UI updates
 - **PostgreSQL** - Database
 - **Tailwind CSS** - Styling
+- **Stripe** - Payment processing via Checkout
 - **Bcrypt** - Password hashing
 
 ## Getting Started
@@ -62,7 +63,8 @@ Admin panel: [`localhost:4000/admin`](http://localhost:4000/admin)
 lib/
 ├── jumbo_parking/           # Business logic
 │   ├── accounts/            # User authentication
-│   └── parking/             # Customers, spaces, pricing, bookings
+│   ├── parking/             # Customers, spaces, pricing, bookings
+│   └── payments/            # Stripe payment integration
 └── jumbo_parking_web/       # Web layer
     ├── live/
     │   ├── admin/           # Admin LiveViews
@@ -85,7 +87,17 @@ On the server, create `/var/www/jumbo-parking/.env` with:
 DATABASE_URL=ecto://user:pass@localhost/jumbo_parking_prod
 SECRET_KEY_BASE=your_secret_key_base
 PHX_HOST=yourdomain.com
+STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 ```
+
+### Stripe Configuration
+
+For payment processing, you'll need a [Stripe account](https://stripe.com):
+
+1. Get your API keys from the Stripe Dashboard
+2. Use `sk_test_...` keys for development/testing
+3. Use `sk_live_...` keys for production
+4. Test payments with card number `4242 4242 4242 4242`
 
 ## License
 
