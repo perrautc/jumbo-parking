@@ -116,7 +116,8 @@ defmodule JumboParkingWeb.Admin.CustomersLive do
   @impl true
   def handle_event("open_assign", %{"id" => id}, socket) do
     customer = Parking.get_customer!(String.to_integer(id))
-    available_spaces = Parking.get_available_spaces()
+    # Filter available spaces by customer's vehicle type
+    available_spaces = Parking.get_available_spaces(customer.vehicle_type)
 
     socket =
       socket

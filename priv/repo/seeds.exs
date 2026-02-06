@@ -1,6 +1,6 @@
 alias JumboParking.Repo
 alias JumboParking.Accounts
-alias JumboParking.Parking.{PricingPlan, Customer, ParkingSpace, ActivityLog}
+alias JumboParking.Parking.{ParkingLot, PricingPlan, Customer, ParkingSpace, ActivityLog}
 
 import Ecto.Query
 
@@ -84,6 +84,23 @@ Repo.insert!(%PricingPlan{
 
 IO.puts("  3 pricing plans created")
 
+# ── Parking Lot ─────────────────────────────────────────────
+
+IO.puts("Creating parking lot...")
+
+main_lot = Repo.insert!(%ParkingLot{
+  name: "Main Lot",
+  street: "123 Industrial Blvd",
+  city: "Columbia",
+  state: "SC",
+  zip: "29201",
+  description: "Main parking facility with truck, RV, and car spaces",
+  capacity: 60,
+  active: true
+})
+
+IO.puts("  Main Lot created")
+
 # ── Customers ───────────────────────────────────────────────
 
 IO.puts("Creating customers...")
@@ -125,19 +142,21 @@ IO.puts("  #{length(customers)} customers created")
 
 IO.puts("Creating parking spaces...")
 
-zones = [
-  {"Zone A - Trucks", "A", 20},
-  {"Zone B - RVs", "B", 15},
-  {"Zone C - Cars", "C", 15}
+sections = [
+  {"Section A", "A", "truck", 20},
+  {"Section B", "B", "rv", 15},
+  {"Section C", "C", "car", 15}
 ]
 
 all_spaces =
-  for {zone_name, prefix, count} <- zones, i <- 1..count do
+  for {section_name, prefix, vehicle_type, count} <- sections, i <- 1..count do
     number = "#{prefix}#{String.pad_leading("#{i}", 3, "0")}"
 
     Repo.insert!(%ParkingSpace{
       number: number,
-      zone: zone_name,
+      parking_lot_id: main_lot.id,
+      vehicle_type: vehicle_type,
+      section: section_name,
       status: "available"
     })
   end
@@ -149,21 +168,26 @@ IO.puts("  #{length(all_spaces)} parking spaces created")
 IO.puts("Assigning spaces to customers...")
 
 active_customers = Enum.filter(customers, &(&1.status == "active"))
-available_spaces = all_spaces
 
-# Assign 30 spaces to active customers
-{assigned, _remaining} =
-  Enum.reduce(Enum.take(active_customers, 30), {0, available_spaces}, fn customer, {count, spaces} ->
-    case spaces do
+# Group spaces by vehicle type for matching
+spaces_by_type = Enum.group_by(all_spaces, & &1.vehicle_type)
+
+# Assign spaces to customers based on vehicle type
+{assigned, _} =
+  Enum.reduce(active_customers, {0, spaces_by_type}, fn customer, {count, spaces_map} ->
+    available_spaces = Map.get(spaces_map, customer.vehicle_type, [])
+
+    case available_spaces do
       [space | rest] ->
         space
         |> Ecto.Changeset.change(%{customer_id: customer.id, status: "occupied"})
         |> Repo.update!()
 
-        {count + 1, rest}
+        updated_spaces_map = Map.put(spaces_map, customer.vehicle_type, rest)
+        {count + 1, updated_spaces_map}
 
       [] ->
-        {count, []}
+        {count, spaces_map}
     end
   end)
 
@@ -176,7 +200,7 @@ remaining_spaces = Repo.all(
   limit: 10
 )
 
-for space <- Enum.take(remaining_spaces, 10) do
+for space <- remaining_spaces do
   space
   |> Ecto.Changeset.change(%{
     status: "reserved",

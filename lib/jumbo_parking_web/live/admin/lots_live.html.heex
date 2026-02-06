@@ -1,0 +1,273 @@
+<div>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <h1 class="text-2xl font-bold text-white">Parking Lots</h1>
+    <button
+      phx-click="new_lot"
+      class="bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Lot
+    </button>
+  </div>
+
+  <!-- Lots Grid -->
+  <%= if @lots == [] do %>
+    <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-12 text-center">
+      <.building_icon class="h-12 w-12 text-[#a0a0a0] mx-auto mb-4" />
+      <p class="text-[#a0a0a0] text-lg mb-4">No parking lots yet</p>
+      <button
+        phx-click="new_lot"
+        class="bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold px-6 py-2.5 rounded-lg transition-colors"
+      >
+        Create Your First Lot
+      </button>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <%= for lot <- @lots do %>
+        <div class="bg-[#1a1a1a] border border-[#333333] rounded-xl p-6 hover:border-[#c8d935]/30 transition-colors">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#c8d935]/10 flex items-center justify-center">
+                <.building_icon class="h-5 w-5 text-[#c8d935]" />
+              </div>
+              <div>
+                <h3 class="text-white font-semibold">{lot.name}</h3>
+                <p class="text-[#a0a0a0] text-sm">{format_address(lot)}</p>
+              </div>
+            </div>
+            <span class={"px-2 py-1 rounded-full text-xs font-medium #{if lot.active, do: "bg-green-500/10 text-green-400", else: "bg-gray-500/10 text-gray-400"}"}>
+              {if lot.active, do: "Active", else: "Inactive"}
+            </span>
+          </div>
+
+          <p :if={lot.description} class="text-[#a0a0a0] text-sm mb-4 line-clamp-2">{lot.description}</p>
+
+          <!-- Space Stats -->
+          <div class="grid grid-cols-4 gap-2 mb-4">
+            <div class="bg-[#111111] rounded-lg p-2 text-center">
+              <p class="text-white font-bold text-lg">{lot.space_counts.total}</p>
+              <p class="text-[#a0a0a0] text-xs">Total</p>
+            </div>
+            <div class="bg-green-500/10 rounded-lg p-2 text-center">
+              <p class="text-green-400 font-bold text-lg">{lot.space_counts.available}</p>
+              <p class="text-[#a0a0a0] text-xs">Available</p>
+            </div>
+            <div class="bg-[#c8d935]/10 rounded-lg p-2 text-center">
+              <p class="text-[#c8d935] font-bold text-lg">{lot.space_counts.occupied}</p>
+              <p class="text-[#a0a0a0] text-xs">Occupied</p>
+            </div>
+            <div class="bg-blue-500/10 rounded-lg p-2 text-center">
+              <p class="text-blue-400 font-bold text-lg">{lot.space_counts.reserved}</p>
+              <p class="text-[#a0a0a0] text-xs">Reserved</p>
+            </div>
+          </div>
+
+          <!-- Capacity -->
+          <div :if={lot.capacity} class="mb-4">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-[#a0a0a0]">Capacity</span>
+              <span class="text-white">{lot.space_counts.total}/{lot.capacity}</span>
+            </div>
+            <div class="w-full bg-[#333333] rounded-full h-2">
+              <div
+                class="h-2 rounded-full bg-[#c8d935] transition-all duration-500"
+                style={"width: #{min(lot.space_counts.total / lot.capacity * 100, 100)}%"}
+              ></div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-2">
+            <.link
+              href={"/admin/spaces?lot_id=#{lot.id}"}
+              class="flex-1 bg-[#111111] hover:bg-[#222222] text-white text-sm font-medium py-2 rounded-lg transition-colors text-center"
+            >
+              View Spaces
+            </.link>
+            <button
+              phx-click="edit_lot"
+              phx-value-id={lot.id}
+              class="p-2 text-[#a0a0a0] hover:text-[#c8d935] transition-colors rounded hover:bg-white/5"
+              title="Edit"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              phx-click="open_delete"
+              phx-value-id={lot.id}
+              class="p-2 text-[#a0a0a0] hover:text-red-400 transition-colors rounded hover:bg-white/5"
+              title="Delete"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Form Modal (Create/Edit) -->
+  <.modal id="form-modal" show={@show_form_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6">
+      <h3 class="text-xl font-bold text-white mb-6">
+        {if @selected_lot, do: "Edit Parking Lot", else: "New Parking Lot"}
+      </h3>
+      <.form :if={@lot_form} for={@lot_form} phx-submit="save_lot" class="space-y-4">
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Lot Name *</label>
+          <input
+            type="text"
+            name="parking_lot[name]"
+            value={@lot_form[:name].value}
+            placeholder="e.g., Main Lot, Downtown Location"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            required
+          />
+          <p :if={@lot_form[:name].errors != []} class="text-red-400 text-sm mt-1">
+            {Enum.map_join(@lot_form[:name].errors, ", ", fn {msg, _} -> msg end)}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Street Address</label>
+          <input
+            type="text"
+            name="parking_lot[street]"
+            value={@lot_form[:street].value}
+            placeholder="123 Main Street"
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+          />
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">City *</label>
+            <input
+              type="text"
+              name="parking_lot[city]"
+              value={@lot_form[:city].value}
+              placeholder="Columbia"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">State *</label>
+            <input
+              type="text"
+              name="parking_lot[state]"
+              value={@lot_form[:state].value}
+              placeholder="SC"
+              maxlength="2"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none uppercase"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">ZIP</label>
+            <input
+              type="text"
+              name="parking_lot[zip]"
+              value={@lot_form[:zip].value}
+              placeholder="29201"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm text-[#a0a0a0] mb-1">Description</label>
+          <textarea
+            name="parking_lot[description]"
+            rows="2"
+            placeholder="Brief description of this lot..."
+            class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none resize-none"
+          >{@lot_form[:description].value}</textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-[#a0a0a0] mb-1">Capacity (optional)</label>
+            <input
+              type="number"
+              name="parking_lot[capacity]"
+              value={@lot_form[:capacity].value}
+              placeholder="Total planned spaces"
+              min="0"
+              class="w-full bg-[#111111] border border-[#333333] rounded-lg px-4 py-2.5 text-white focus:border-[#c8d935] outline-none"
+            />
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="parking_lot[active]"
+                value="true"
+                checked={@lot_form[:active].value != false}
+                class="w-5 h-5 rounded border-[#333333] bg-[#111111] text-[#c8d935] focus:ring-[#c8d935] focus:ring-offset-0"
+              />
+              <span class="text-white">Active</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            class="flex-1 bg-[#c8d935] hover:bg-[#b5c52e] text-black font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            {if @selected_lot, do: "Save Changes", else: "Create Lot"}
+          </button>
+          <button
+            type="button"
+            phx-click="close_modal"
+            class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  </.modal>
+
+  <!-- Delete Confirmation Modal -->
+  <.modal id="delete-modal" show={@show_delete_modal} on_cancel={JS.push("close_modal")}>
+    <div class="p-6 text-center">
+      <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">Delete Parking Lot</h3>
+      <p class="text-[#a0a0a0] mb-6">
+        Are you sure you want to delete
+        <span :if={@selected_lot} class="text-white font-medium">{@selected_lot.name}</span>?
+        This action cannot be undone.
+      </p>
+      <p class="text-yellow-400 text-sm mb-6">
+        Note: Lots with parking spaces cannot be deleted. Delete all spaces first.
+      </p>
+      <div class="flex gap-3">
+        <button
+          phx-click="confirm_delete"
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
+        >
+          Delete
+        </button>
+        <button
+          phx-click="close_modal"
+          class="flex-1 border border-[#333333] text-white py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </.modal>
+</div>
