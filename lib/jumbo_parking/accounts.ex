@@ -281,6 +281,135 @@ defmodule JumboParking.Accounts do
     :ok
   end
 
+  ## Team Management
+
+  alias JumboParking.Accounts.Role
+
+  @doc """
+  Lists all team members ordered by inserted_at.
+  """
+  def list_team_members do
+    User
+    |> order_by(asc: :inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single team member by ID.
+  Raises if the user doesn't exist.
+  """
+  def get_team_member!(id), do: Repo.get!(User, id)
+
+  @doc """
+  Creates a team member with email, password, and role.
+  The account is auto-confirmed.
+  """
+  def create_team_member(attrs) do
+    %User{}
+    |> User.team_member_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Returns a changeset for creating a new team member.
+  """
+  def change_team_member(%User{} = user, attrs \\ %{}) do
+    User.team_member_changeset(user, attrs, hash_password: false)
+  end
+
+  @doc """
+  Returns a changeset for updating a team member (email and role only).
+  """
+  def change_team_member_update(%User{} = user, attrs \\ %{}) do
+    User.update_team_member_changeset(user, attrs, validate_unique: false)
+  end
+
+  @doc """
+  Updates a team member's email and role.
+  """
+  def update_team_member(%User{} = user, attrs) do
+    user
+    |> User.update_team_member_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a team member.
+  Returns error if trying to delete the last superadmin.
+  """
+  def delete_team_member(%User{} = user) do
+    if user.role == Role.superadmin() && count_superadmins() <= 1 do
+      {:error, :last_superadmin}
+    else
+      Repo.delete(user)
+    end
+  end
+
+  @doc """
+  Resets a team member's password.
+  """
+  def reset_team_member_password(%User{} = user, attrs) do
+    user
+    |> User.password_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns a changeset for resetting a team member's password.
+  """
+  def change_team_member_password(%User{} = user, attrs \\ %{}) do
+    User.password_changeset(user, attrs, hash_password: false)
+  end
+
+  @doc """
+  Checks if the current user can change another user's role.
+  Returns false if:
+  - User is trying to demote themselves from superadmin
+  - Would result in no superadmins
+  """
+  def can_change_role?(%User{} = current_user, %User{} = target_user, new_role) do
+    cond do
+      # Can't demote yourself from superadmin
+      current_user.id == target_user.id &&
+        target_user.role == Role.superadmin() &&
+        new_role != Role.superadmin() ->
+        false
+
+      # Can't remove the last superadmin
+      target_user.role == Role.superadmin() &&
+        new_role != Role.superadmin() &&
+        count_superadmins() <= 1 ->
+        false
+
+      true ->
+        true
+    end
+  end
+
+  @doc """
+  Checks if the current user can delete the target user.
+  """
+  def can_delete_user?(%User{} = current_user, %User{} = target_user) do
+    cond do
+      # Can't delete yourself
+      current_user.id == target_user.id ->
+        false
+
+      # Can't delete the last superadmin
+      target_user.role == Role.superadmin() && count_superadmins() <= 1 ->
+        false
+
+      true ->
+        true
+    end
+  end
+
+  defp count_superadmins do
+    User
+    |> where([u], u.role == ^Role.superadmin())
+    |> Repo.aggregate(:count)
+  end
+
   ## Token helper
 
   defp update_user_and_delete_all_tokens(changeset) do

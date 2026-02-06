@@ -40,17 +40,36 @@ defmodule JumboParkingWeb.Router do
     delete "/logout", UserSessionController, :delete
   end
 
-  # Admin protected routes
+  # Admin protected routes - Dashboard (all roles can view)
   scope "/admin", JumboParkingWeb.Admin do
     pipe_through [:browser, :require_authenticated_user]
 
-    live_session :admin,
+    live_session :admin_view,
       on_mount: [{JumboParkingWeb.Admin.AdminAuth, :ensure_admin}] do
       live "/", DashboardLive, :index
+    end
+  end
+
+  # Admin protected routes - Parking operations (admin+ can manage)
+  scope "/admin", JumboParkingWeb.Admin do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :admin_manage,
+      on_mount: [{JumboParkingWeb.Admin.AdminAuth, :ensure_can_manage}] do
       live "/customers", CustomersLive, :index
       live "/lots", LotsLive, :index
       live "/spaces", SpacesLive, :index
       live "/pricing", PricingLive, :index
+    end
+  end
+
+  # Admin protected routes - Team management (superadmin only)
+  scope "/admin", JumboParkingWeb.Admin do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :admin_superadmin,
+      on_mount: [{JumboParkingWeb.Admin.AdminAuth, :ensure_superadmin}] do
+      live "/team", TeamLive, :index
     end
   end
 
